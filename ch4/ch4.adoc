@@ -1,0 +1,139 @@
+= 4. Basic Datatypes
+
+== 4.3 Anatomy of a Data Declaration
+
+=== Exercises: Mood Swing
+
+. Mood
+. Blah or Woot
+. Prohibits an implementation that returns Blah
+. :-)           
+
+[source, haskell]
+----
+changeMood Woot = Blah
+changeMood Blah = Woot
+
+λ> changeMood Woot
+Blah
+λ> changeMood Blah
+Woot
+----
+
+== 4.6 Go on and Bool me
+
+Exercises: Find the Mistakes
+
+. `not True && True`
+. `not (x == 6) --assuming x is defined in scope`
+. Correct
+. `["Merry"] > ["Happy"] -- assuming Merry and Happy are NOT in scope`
+. `['1', '2', '3'] ++ "look at me!"`
+
+== 4.9 Chapter Exercises
+
+.1.
+----
+length :: [a] -> Integer
+----
+
+.2.
+
+[loweralpha]
+. 5
+. 3
+. 2
+. 4
+
+.3.
+
+Will return an error because length's return type Int is not of the typeclass Fractional
+
+.4.
+`6 \`div\` length [1,2,3]`
+
+.5.
+`Bool`, the expression results in `True`
+
+.6.
+`Bool`, the expression results in `False`
+
+.7.
+
+[loweralpha]
+. Works. Reduces to `True`
+. Will not work. Lists are required to have elements of the same type.
+. Works. Reduces to 4.  
+. Works. Reduces to `False`
+. Will not work. (&&) takes two Bool arguments. 9 is not a Bool.
+
+.8.
+
+[source, haskell]
+----
+isPalindrome :: (Eq a) => [a] -> Bool
+isPalindrome x =
+  x == reverse x
+
+λ> isPalindrome "blah"
+False
+λ> isPalindrome "boob"
+True
+----
+
+.9.
+
+[source, haskell]
+----
+myAbs :: Integer -> Integer
+myAbs x =
+  if x < 0
+  then negate x
+  else x
+
+λ> myAbs 0
+0
+λ> myAbs (-5)
+5
+λ> myAbs 5
+5
+----
+
+.10.
+
+[source, haskell]
+f :: (a, b) -> (c, d) -> ((b, d), (a, c))
+f x y =
+  ((snd x, snd y), (fst x, fst y))
+
+=== Correcting Syntax
+
+.1.
+
+[source, haskell]
+λ> x = (+)
+λ> f xs = w `x` 1 where w = length xs
+λ> f "awesome!"
+9
+
+.2.
+
+[source, haskell]
+λ> \x -> x
+\x -> x :: t -> t
+λ> (\x -> x) "awesome!"
+"awesome!"
+
+.3.
+
+[source, haskell]
+λ> f (a, b) = a
+λ> f (100, 230)
+100
+
+=== Matching the function names to their types
+
+1. c) `Show a => a -> String`
+2. b) `Eq a => a -> a -> Bool`
+3. a) `(a, b) -> a`
+4. d) `(+) :: Num a => a -> a -> a`

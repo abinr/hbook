@@ -1,0 +1,62 @@
+= 1. All you need is lamba
+== 1.6 Multiple Expressions
+=== Intermission: Equivalence Excercises
+. λxy.xz equals λmn.mz
+. λxy.xxy equals λa(λb.aab)
+. λxyz.zx equals λtos.st
+
+== 1.11 Chapter Exercies
+=== Combinators
+. λx.xxx *Yes*
+. λxy.zx *No*
+. λxyz.xy(zx) *Yes*
+. λxyz.xy(zxy) *Yes*
+. λxy.xy(zxy) *No*
+
+=== Normal Form Or Diverge?
+. λx.xxx *Normal Form*
+. (λz.zz)(λy.yy) *Divergent*
+. (λx.xxx)z *Normal Form*
+
+=== Beta Reduce
+. (λabc.cba)zz(λwv.w)
+.. (λbc.cbz)z(λwv.w)
+.. (λc.czz)(λwv.w)
+.. (λwv.w)zz
+.. (λv.z)z
+.. *z*
+
+. (λxλy.xyy)(λa.a)b
+.. (λy.(λa.a)yy)b
+.. (λa.a)bb
+.. *bb*
+
+. (λy.y)(λx.xx)(λz.zq)
+.. (λx.xx)(λz.zq)
+.. (λz.zq)(λz.zq)
+.. (λz.zq)q
+.. *qq*
+
+. (λz.z)(λz.zz)(λz.zy)
+.. (λz.zz)(λz.zy)
+.. (λz.zy)(λz.zy)
+.. (λz.zy)y
+.. *yy*
+
+. (λx.λy.xyy)(λy.y)y
+.. (λy.(λy.y)yy)y
+.. (λy.y)yy
+.. *yy*
+
+. (λa.aa)(λb.ba)c
+.. (λb.ba)(λb.ba)c
+.. (λb.ba)(a)c
+.. *aac*
+
+. (λxyz.xz(yz))(λx.z)(λx.a)
+.. (λyz1.(λx.z)(z1)(yz1))(λx.a)
+.. (λz1.(λx.z)(z1)\((λx.a)z1))
+.. (λz1.z)\((λx.a)z1))
+.. (λz1.z)(a)
+.. *λz1.za*
+

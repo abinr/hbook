@@ -1,0 +1,350 @@
+= 5. Types
+
+== 5.3 How to read type signatures
+
+=== Exercises: Type Matching
+
+. c)
+. d) 
+. b)
+. a)
+. e)
+
+== 5.4 Currying
+
+=== Exercises: Type Arguments
+
+. a)
+. d)
+. d)
+. c)
+. a)
+. e) 
+. d)
+. a)
+. c) 
+
+== 5.5 Polymorphism
+
+=== Exercises: Parametricity
+
+.1.
+
+[source, haskell]
+----
+λ> i :: a -> a; i x = 5 -- Nope.
+
+<interactive>:667:20: error:
+    • No instance for (Num a) arising from the literal ‘5’
+      Possible fix:
+        add (Num a) to the context of
+          the type signature for:
+            i :: a -> a
+----
+
+.2.
+
+[source, haskell]
+----
+f :: a -> a -> a
+f x y = x
+
+g :: a -> a -> a
+g x y = y
+----
+
+.3.
+
+[source, haskell]
+----
+λ> t :: a -> b; t x = x -- Nearly impossibile to implement (unsafeCoerce ?)
+
+<interactive>:699:20: error:
+    • Couldn't match expected type ‘b’ with actual type ‘a’
+      ‘a’ is a rigid type variable bound by
+        the type signature for:
+          t :: forall a b. a -> b
+        at <interactive>:699:6
+
+λ> t :: String -> Int; t x = 5 -- Yes, behavior changes when types change.
+λ> t "awesome!"
+5
+----
+
+== 5.6 Type inference
+
+=== Exercises: Apply Yourself
+
+. `(++) :: [Char] -> [Char] -> [Char]`
+. `(*) :: Fractional a => a -> a -> a `
+. `take :: Int -> [Char] -> [Char]`
+. `(>) :: Int -> Int -> Bool`
+. `(<) :: Char -> Char -> Bool`
+
+== 5.8 Chapter Exercises
+
+=== Multiple Choice
+
+. c)
+. a)
+. b)
+. c)
+
+=== Determine the type
+
+.1.
+
+[loweralpha]
+. Num a => a
+. Num a => (a, [Char])
+. (Integer, [Char])
+. Bool
+. Int
+. Bool
+
+.2.
+
+`Num a => a`
+
+.3.
+
+`Num a => a -> a`
+
+.4.
+
+`Fractional a => a`
+
+.5.
+
+`[Char]`
+
+=== Does it compile?
+
+.1.
+
+`(^) 5 $ 10` is a fully applied function, to correct:
+[source, haskell]
+bigNum = (^) 5
+wahoo = bigNum $ 10
+
+.2.
+
+Compiles.
+
+.3.
+
+`b` and `c` are fully applied values. The `b` in `b 10` is not a function, to correct:
+[source, haskell]
+a = (+)
+b = 5
+c = a b 10
+d = a c 200
+
+.4.
+
+There is no `c` variable in scope, to correct: (var names changed)
+[source, haskell]
+m = 12 + n 2
+n p = 10000 * p
+
+=== Type variable or specific type constructor?
+
+.1.
+[1] - Constrained polymorphic +
+[2] - Fully polymorphic +
+[3], [4] - Concrete
+
+.2.
+[1] - Fully polymorphic +
+[2], [3] - Concrete
+
+.3.
+[1] - Fully polymorphic +
+[2] - Constrained polymorphic +
+[3] - Concrete
+
+.4.
+[1], [2] - Fully polymorphic +
+[3] - Concrete
+
+=== Write a type signature
+
+1. `functionH :: [a] -> a`
+2. `functionC :: (Ord a) => a -> a -> Bool`
+3. `functionS :: (a, b) -> b`
+
+=== Given a type, write a function
+
+.1.
+[source, haskell]
+i :: a -> a
+i a = a
+
+.2.
+[source, haskell]
+c :: a -> b -> a
+c a b = a
+
+.3.
+[source, haskell]
+----
+c'' :: b -> a -> b
+c'' x y = x
+
+λ> :t c
+c :: t1 -> t -> t1
+λ> :t c''
+c'' :: t1 -> t -> t1
+----
+
+.4.
+[source, haskell]
+c' :: a -> b -> b
+c' x y = y
+
+.5.
+[source, haskell]
+r :: [a] -> [a]
+-- r = id
+r = reverse
+
+.6.
+[source, haskell]
+co :: (b -> c) -> (a -> b) -> a -> c
+-- co = (.)
+co f g n = f (g n)
+
+.7.
+[source, haskell]
+a :: (a -> c) -> a -> a
+a f x = x
+
+.8.
+[source, haskell]
+a' :: (a -> b) -> a -> b
+a' f a = f a
+
+=== Fix it
+
+.1.
+[source, haskell]
+----
+module Sing where
+
+fstString :: [Char] -> [Char]
+fstString x = x ++ " in the rain"
+
+sndString :: [Char] -> [Char]
+sndString x = x ++ " over the rainbow"
+
+sing :: [Char]
+sing =
+  if (x > y) then fstString x else sndString y
+  where x = "Singin"
+        y = "Somewhere"
+
+λ> sing
+"Somewhere over the rainbow"
+----
+
+.2.
+[source, haskell]
+----
+module Sing where
+
+fstString :: [Char] -> [Char]
+fstString x = x ++ " in the rain"
+
+sndString :: [Char] -> [Char]
+sndString x = x ++ " over the rainbow"
+
+sing :: [Char]
+sing =
+  if (x < y) then fstString x else sndString y -- changed to less than
+  where x = "Singin"
+        y = "Somewhere"
+
+λ> sing
+"Singin in the rain"
+----
+
+.3.
+[source, haskell]
+----
+module Arith3Broken where
+
+main :: IO ()
+main = do
+  print $ 1 + 2
+  putStrLn $ show 10
+  print (negate $ -1)
+  print ((+) 0 blah)
+    where blah = negate 1
+
+λ> main
+3
+10
+1
+-1
+----
+
+=== Type-Kwon-Do
+
+.1.
+[source, haskell]
+----
+f :: Int -> String
+f = undefined
+
+g :: String -> Char
+g = undefined
+
+h :: Int -> Char
+h = g . f
+----
+
+.2.
+[source, haskell]
+----
+data A
+data B
+data C
+
+q :: A -> B
+q = undefined
+
+w :: B -> C
+w = undefined
+
+e :: A -> C
+e = w . q
+----
+
+.3.
+[source, haskell]
+----
+data X
+data Y
+data Z
+
+xz :: X -> Z
+xz = undefined
+
+yz :: Y -> Z
+yz = undefined
+
+xform :: (X, Y) -> (Z, Z)
+xform (x, y) =
+  (xz x, yz y)
+----
+
+.4.
+[source, haskell]
+----
+munge :: (x -> y)
+      -> (y -> (w, z))
+      -> x
+      -> w
+munge xy ywz =
+  fst . ywz . xy
+----

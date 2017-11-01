@@ -1,0 +1,126 @@
+= 3. Strings
+
+== 3.4 Top-level versus local definitions
+
+=== Exercises: Scope
+
+. Yes. *_y_* is in scope for *_z_*
+. No. *_h_* is undefined and thus not in scope.
+. No. The *_d_* in `r = d / 2` is undefined.
+. Yes. *_d_* is defined by the `area` function parameter.
+
+== 3.5 Types of concatenation functions
+
+=== Exercises: Syntax Errors
+
+. No. The (++) infix operator needs parentheses to be used as prefix.
+. No.
+** Multiple characters inside single quotes won't parse.
+** The (++) operator works on lists of Chars.
+. Yes. `concat` accepts a list of lists as input.
+
+== 3.8 Chapter Exercises
+
+=== Reading syntax
+
+1. 
+[loweralpha]
+. Correct. `concat :: \[[a]] -> [a]`
+. Incorrect. Correction: `(++) [1,2,3] [4,5,6]`
+. Correct. `(++) :: [a] -> [a] -> [a]`
+. Incorrect. Correction: `"hello" ++ " world!"`
+. Incorrect. Correction> `"hello" !! 4`
+. Correct. `(!!) :: [a] -> Int -> a`
+. Incorrect. Correction: `take 4 "lovely"`
+. Correct. `take :: Int -> [a] -> [a]`
+
+2.
+[loweralpha]
+. d)
+. c)
+. e)
+. a)
+. b)
+
+=== Building functions
+
+1 a)::
+[source, haskell]
+λ> "Curry is awesome" ++ "!"
+"Curry is awesome!"
+
+b)::
+[source, haskell]
+λ> take 1 $ drop 4 "Curry is awesome!"
+"y"
+
+c)::
+[source, haskell]
+λ> drop 9 "Curry is awesome!"
+"awesome!"
+
+2::
+[source, haskell]
+----
+exclamate :: String -> String
+exclamate =
+  flip (++) "!"
+
+fifth :: String -> String
+fifth =
+  take 1 . drop 4
+
+fromTenth :: String -> String
+fromTenth =
+  drop 9
+----
+
+[source, haskell]
+λ> exclamate "Curry is awesome"
+"Curry is awesome!"
+λ> fifth "Curry is awesome!"
+"y"
+λ> fromTenth "Curry is awesome!"
+"awesome!"
+
+3::
+[source, haskell]
+thirdLetter :: String -> Char
+thirdLetter =
+  flip (!!) 2
+
+[source, haskell]
+λ> thirdLetter "Curry is awesome!"
+'r'
+
+4::
+[source, haskell]
+letterIndex =
+  (!!) "Curry is awesome!"
+
+[source, haskell]
+λ> letterIndex 3
+'r'
+λ> letterIndex 0
+'C'
+λ> letterIndex 5
+' '
+λ> letterIndex 1000
+*** Exception: Prelude.!!: index too large
+
+5::
+[source, haskell]
+rvrs x =
+  drop 9 x ++ (take 4 $ drop 5 x) ++ take 5 x
+
+[source, haskell]
+λ> rvrs "Curry is awesome"
+"awesome is Curry"
+
+
+
+
+
+
+
+

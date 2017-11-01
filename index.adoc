@@ -1,0 +1,18 @@
+= Haskell From First Principles: Exercises
+:toc: left
+:source-highlighter: highlightjs
+:icons: font
+
+include::ch1/ch1.adoc[leveloffset=+1]
+
+include::ch2/ch2.adoc[leveloffset=+1]
+
+include::ch3/ch3.adoc[leveloffset=+1]
+
+include::ch4/ch4.adoc[leveloffset=+1]
+
+include::ch5/ch5.adoc[leveloffset=+1]
+
+include::ch6/ch6.adoc[leveloffset=+1]
+
+include::ch7/ch7.adoc[leveloffset=+1]

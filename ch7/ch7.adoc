@@ -1,0 +1,71 @@
+= 7. More functional patterns
+
+== 7.3 Anonymous Functions
+
+=== Exercises: Grab Bag
+
+1. All 4 are equivalent.
+2. d) 
+3. :-)
+a. `f = \n -> n + 1`
+b. `addFive = \x -> \y -> (if x > y then y else x) + 5`
+c. `mflip f x y = f y x`
+
+== 7.4 Pattern matching
+
+=== Exercises: Variety Pack
+
+.1.
+a) (a, b) -> a +
+b) [Char], different k1, k3 :: Num a => a +
+c) k3
+
+.2.
+[source, haskell]
+f :: (a, b, c)
+  -> (d, e, f)
+  -> ((a, d), (c, f))
+f (a, _, c) (d, _, f) =
+  ((a, d), (c, f))
+
+== 7.5 Case expressions
+
+=== Exercises: Case Practices
+
+.1.
+[source, haskell]
+functionC x y =
+  case (x > y) of
+    True -> x
+    False -> y
+
+.2.
+[source, haskell]
+ifEvend2 n =
+  case (even n) of
+    True -> n + 2
+    False -> n
+
+.3.
+[source, haskell]
+nums x =
+  case compare x 0 of
+    LT -> -1
+    EQ -> 0
+    GT -> 1
+
+== 7.6 Higher order functionns
+
+=== Exercises: Artful Dodgy
+
+1. 1
+2. 11
+3. 22
+4. 21
+5. 12
+6. 11
+7. 22
+8. 21
+9. 22
+10. 31
+11. 23
