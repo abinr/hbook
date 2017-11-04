@@ -16,3 +16,5 @@ include::ch5/ch5.adoc[leveloffset=+1]
 include::ch6/ch6.adoc[leveloffset=+1]
 
 include::ch7/ch7.adoc[leveloffset=+1]
+
+include::ch8/ch8.adoc[leveloffset=+1]

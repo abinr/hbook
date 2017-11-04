@@ -69,3 +69,105 @@ nums x =
 9. 22
 10. 31
 11. 23
+
+== 7.8 Guards
+
+=== Exercises: Guard duty
+
+.1.
+[source, haskell]
+----
+avgGrade :: (Fractional a, Ord a)
+         => a -> Char
+avgGrade x
+  | otherwise = 'F'
+  | y >= 0.9 = 'A'
+  | y >= 0.8 = 'B'
+  | y >= 0.7 = 'C'
+  | y >= 0.59 = 'D'
+  | y < 0.59 = 'F'
+  where y = x / 100
+
+λ> map (avgGrade . (*10)) [1..10]
+"FFFFFFFFFF"
+----
+
+.2.
+It typechecks but does not work the same. The first condition which satisfies is chosen, so `y >= 0.7 = 'C'` will be satisfied by 100.
+
+.3.
+b) True when xs is a palindrome
+
+.4.
+A List of any type
+
+.5.
+`[a] -> [a]`
+
+.6.
+c)
+
+.7.
+Types constrained by the `Num` and `Ord` typeclasses. 
+
+.8.
+`numbers :: (Ord a, Num a, Num b) => a -> b`
+
+== 7.11 Chapter Exercises
+
+=== Multiple choice
+
+1. d)
+2. b)
+3. d)
+4. b)
+5. a)
+
+=== Let's write code
+
+.1.
+[source, haskell]
+tensDigit :: Integral a => a -> a
+tensDigit = flip mod 10 . fst . flip divMod 10
+
+[source, haskell]
+hunsD :: Integral a => a -> a
+hunsD = flip mod 100 . flip div 100
+
+.2. 
+[source, haskell]
+----
+foldBool :: a -> a -> Bool -> a
+foldBool x y b =
+  case b of
+    True -> y
+    False -> x
+
+foldBool' x y b
+  | b == True = y
+  | b == False = x
+----
+
+.3.
+[source, haskell]
+g :: (a -> b) -> (a, c) -> (b, c)
+g f (a, c) =
+  (f a, c)
+
+.5. 
+[source, haskell]
+roundTrip :: (Show a, Read a) => a -> a
+roundTrip = read . show
+
+.6.
+[source, haskell]
+roundTrip :: (Show a, Read b) => a -> b
+roundTrip = read . show
+
+main = do
+  print (roundTrip $ 4 :: Integer)
+  print (id 4)
+
+main = do
+  print (roundTrip 4)
+  print (id 4)
