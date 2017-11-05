@@ -1,0 +1,439 @@
+= 9. Lists
+
+== 9.5 Using ranges to construct lists
+
+=== Exercise: EnumFromTo
+
+[source, haskell]
+----
+ranger :: Enum a => a -> a -> [a]
+ranger start stop
+  | a < b = start : ranger (toEnum $ 1 + a) stop
+  | a == b = [start]
+  | a > b = []
+  where
+    a = fromEnum start
+    b = fromEnum stop
+
+eftBool :: Bool -> Bool -> [Bool]
+eftBool = ranger
+
+eftOrd :: Ordering ->
+          Ordering ->
+          [Ordering]
+eftOrd = ranger
+
+eftInt :: Int -> Int -> [Int]
+eftInt = ranger
+
+eftChar :: Char -> Char -> [Char]
+eftChar = ranger
+----
+
+== 9.6 Extracting portions of lists
+
+=== Exercises: Thy Fearful Symmetry
+
+.1.
+[source, haskell]
+myWords :: [Char] -> [[Char]]
+myWords [] = []
+myWords (' ':xs) =
+  myWords xs
+myWords xs =
+  takeWhile (/= ' ') xs : myWords (dropWhile (/= ' ') xs)
+
+.2.
+[source, haskell]
+myLines :: String -> [String]
+myLines [] = []
+myLines ('\n':xs) = myLines xs
+myLines xs =
+  takeWhile (/= '\n') xs : myLines (dropWhile (/= '\n') xs)
+
+.3.
+[source, haskell]
+----
+splitOn :: Char -> String -> [String]
+splitOn _ [] = []
+splitOn c xs
+  | (head xs == c) = splitOn c (drop 1 xs)
+  | otherwise =
+      takeWhile (/= c) xs : splitOn c (dropWhile (/= c) xs)
+
+myLines :: String -> [String]
+myLines xs = splitOn '\n' xs
+
+myWords :: [Char] -> [[Char]]
+myWords xs = splitOn ' ' xs
+----
+
+== 9.7 List comprehensions
+
+=== Comprehend Thy Lists
+
+1. [4, 16, 36, 64, 100]
+2. [(1, 64), (1, 81), (1, 100), (4, 64), (4, 81)]
+
+=== Exercises: Square Cube
+
+1. `[ (x, y) | x <- mySqr, y <- myCube ]`
+2. `[ (x, y) | x <- mySqr, y <- myCube, x < 50, y < 50 ]`
+3. :-)
+....
+λ> length [ (x, y) | x <- mySqr, y <- myCube, x < 50, y < 50 ]
+15
+....
+
+== 9.8 Spines and nonstrict evalution
+
+=== Exercises: Bottom Madness
+
+1. Bottom
+2. Will return [1]
+3. Bottom
+4. Will return 3
+5. Bottom
+6. Will return [2]
+7. Bottom
+8. Will return [1]
+9. Will return [1,3]
+10. Bottom
+
+=== Intermission: Is is in normal form? (Totally unsure of answers)
+
+1. Neither. It is of type Num t => [t] so not yet evaluated.
+2. Doesn't compile?
+3. Neither. (Similar to 1.)
+4. Normal Form. :sprint returns fully evaluated
+5. Normal Form (so also WHNF). `sum` forces full evaluation
+6. Neither. :sprint returns _.
+7. Doesn't compile?
+
+== 9.9 Transforming lists of values
+
+=== Exercises: More Bottoms
+
+1. No, bottom
+2. Will return [2]
+3. No, bottom
+4. It transforms each character in a list to a Bool value. If the character is a lower case vowel then it will go to True, otherwise False. It's type is +
+`itIsMystery :: [Char] -> [Bool]`
+
+.5.
+   a) [1, 4, 9, 16, 25, 36, 49, 64, 91, 100]
+   b) [1, 10, 20]
+   c) [15, 15, 15]
+
+.6. 
+....
+λ> map (\x -> bool x (negate x) (x == 3)) [1..10]
+[1,2,-3,4,5,6,7,8,9,10]
+....
+
+== 9.10 Filtering lists of values
+
+.1. 
+....
+λ> filter (\x -> x `rem` 3 == 0) [1..30]
+[3,6,9,12,15,18,21,24,27,30]
+....
+
+.2.
+....
+λ> multsOf3 = length . filter (\x -> x `rem` 3 == 0)
+λ> multsOf3 [1..30]
+10
+....
+
+.3.
+[source, haskell]
+----
+myFilter :: String -> [String]
+myFilter =
+  let
+    as = ["the", "a", "an"]
+  in
+    filter (not . flip elem as) . words
+
+λ> myFilter "the brown dog was a goof"
+["brown","dog","was","goof"]
+----
+
+== 9.11 Zipping lists
+
+=== Zipping Exercises
+
+.1.
+[source, haskell]
+myZip :: [a] -> [b] -> [(a, b)]
+myZip _ [] = []
+myZip (x:xs) (y:ys) =
+  (x, y) : myZip xs ys
+
+.2.
+[source, haskell]
+myZipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+myZipWith _ [] _ = []
+myZipWith _ _ [] = []
+myZipWith f (x:xs) (y:ys) =
+  f x y : myZipWith f xs ys
+
+.3.
+[source, haskell]
+myZip' :: [a] -> [b] -> [(a, b)]
+myZip' = myZipWith (,)
+
+== 9.12 Chapter Exercises
+
+=== Data.Char
+
+.1.
+[source, haskell]
+λ> import Data.Char
+λ> :t isUpper
+isUpper :: Char -> Bool
+λ> :t toUpper
+toUpper :: Char -> Char
+
+.2.
+[source, haskell]
+----
+onlyUpper :: String -> String
+onlyUpper =
+  filter isUpper
+
+λ> onlyUpper "HbEfLrLxO"
+"HELLO"
+----
+
+.3.
+[source, haskell]
+----
+firstUpper :: String -> String
+firstUpper [] = []
+firstUpper (x:xs) =
+  toUpper x : xs
+
+λ> firstUpper "julie"
+"Julie"
+----
+
+.4.
+[source, haskell]
+----
+allUpper :: String -> String
+allUpper [] = []
+allUpper (x:xs) =
+  toUpper x : allUpper xs
+
+λ> allUpper "woot"
+"WOOT"
+----
+
+.5.
+[source, haskell]
+----
+first :: String -> Maybe Char
+first [] = Nothing
+first (x:_) =
+  Just $ toUpper x
+
+λ> first "lambda lover"
+Just 'L'
+----
+
+.6.
+[source, haskell]
+----
+first' :: String -> Char
+first' xs =
+  toUpper . head $ xs
+
+first'' :: String -> Char
+first'' =
+  toUpper . head
+
+λ> first' "lambda lover"
+'L'
+λ> first'' "lambda lover"
+'L'
+----
+
+=== Ciphers 
+
+[source, haskell]
+----
+module Cipher where
+
+import Data.Char (ord, chr, isLower)
+
+type Shift = Int
+type PlainText = String
+type CipherText = String
+
+caesar :: Shift -> PlainText -> CipherText
+caesar n =
+  cipher (+n)
+
+uncaesar n =
+  cipher (subtract n)
+
+cipher :: (Int -> Int) -> PlainText -> CipherText
+cipher f = map encode
+  where
+    encode c =
+      if isLower c
+      then chr . (+) (ord 'a') . flip mod 26 . f $ ord c - ord 'a'
+      else c
+----
+
+=== Writing your own standard functions
+
+.1.
+[source, haskell]
+myOr :: [Bool] -> Bool
+myOr [] = False
+myOr (x:xs) =
+  if x == True
+  then True
+  else myOr xs
+
+.2.
+[source, haskell]
+----
+myAny :: (a -> Bool) -> [a] -> Bool
+myAny f [] = True
+myAny f (x:xs) =
+  if f x == True
+  then True
+  else myAny f xs
+
+λ> myAny even [1, 3, 5]
+False
+λ> myAny odd [1,3,5]
+True
+----
+
+.3.
+[source, haskell]
+----
+myElem :: Eq a => a -> [a] -> Bool
+myElem e [] = False
+myElem e (x:xs) =
+  if e == x
+  then True
+  else myElem e xs
+
+λ> myElem 1 [1..10]
+True
+λ> myElem 1 [2..10]
+False
+
+myElem' :: Eq a => a -> [a] -> Bool
+myElem' e xs =
+  any (== e) xs
+ 
+λ> myElem' 1 [2..10]
+False
+λ> myElem' 1 [1..10]
+True
+----
+
+.4.
+[source, haskell]
+----
+myReverse :: [a] -> [a]
+myReverse [] = []
+myReverse (x:xs) =
+  myReverse xs ++ [x]
+
+True
+λ> myReverse "blah"
+"halb"
+λ> myReverse [1..5]
+----
+
+.5.
+[source, haskell]
+----
+squish :: [[a]] -> [a]
+squish [] = []
+squish (x:xs) =
+  x ++ squish xs
+
+λ> squish ["hi", "there", "you"]
+"hithereyou"
+----
+
+.6.
+[source, haskell]
+----
+squishMap :: (a -> [b]) -> [a] -> [b]
+squishMap f [] = []
+squishMap f (x:xs) =
+  f x ++ squishMap f xs
+
+λ> squishMap (\x -> [1, x, 3]) [2]
+[1,2,3]
+λ> squishMap (\x -> "WO " ++ [x] ++ " HOO ") "123"
+"WO 1 HOO WO 2 HOO WO 3 HOO "
+----
+
+.7.
+[source, haskell]
+----
+squishAgain :: [[a]] -> [a]
+squishAgain = squishMap id
+
+λ> squishAgain ["hi", "there", "you"]
+"hithereyou"
+----
+
+.8.
+[source, haskell]
+----
+myMaximumBy :: (a -> a -> Ordering) -> [a] -> a
+myMaximumBy f [x] = x
+myMaximumBy f (x:y:xs) =
+  case f x y of
+    LT -> myMaximumBy f (y:xs)
+    EQ -> myMaximumBy f (y:xs)
+    GT -> myMaximumBy f (x:xs)
+
+λ> myMaximumBy compare [1, 53, 9001, 10]
+9001
+----
+
+.9.
+[source, haskell]
+----
+myMinimumBy :: (a -> a -> Ordering) -> [a] -> a
+myMinimumBy f [x] = x
+myMinimumBy f (x:y:xs) =
+  case f x y of
+    LT -> myMinimumBy f (x:xs)
+    EQ -> myMinimumBy f (y:xs)
+    GT -> myMinimumBy f (y:xs)
+
+λ> myMinimumBy compare [1, 53, 9001, 10]
+1
+----
+
+.10.
+[source, haskell]
+----
+myMaximum :: Ord a => [a] -> a
+myMaximum =
+  myMaximumBy compare
+  
+λ> myMaximum [1, 53, 9001, 10]
+9001
+
+myMinimum :: Ord a => [a] -> a
+myMinimum =
+  myMinimumBy compare
+
+λ> myMinimum [1, 53, 9001, 10]
+1
+----
