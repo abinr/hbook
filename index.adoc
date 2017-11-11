@@ -20,3 +20,6 @@ include::ch7/ch7.adoc[leveloffset=+1]
 include::ch8/ch8.adoc[leveloffset=+1]
 
 include::ch9/ch9.adoc[leveloffset=+1]
+
+include::ch10/ch10.adoc[leveloffset=+1]
+

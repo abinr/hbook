@@ -1,0 +1,237 @@
+= 10. Folding lists
+
+== 10.5 Fold left
+
+=== Exercises: Understanding Folds
+
+1:: c)
+
+2::
+
+[source, haskell]
+----
+myfoldl (flip (*)) 1 [1..3]
+
+myfoldl (flip (*)) ((flip (*)) 1 1) [2..3]
+
+myfoldl (flip (*)) ((flip (*)) ((flip (*)) 1 1) 2) [3]
+
+myfoldl (flip (*)) ((flip (*)) ((flip (*)) ((flip (*)) 1 1) 2) 3) []
+
+6
+----
+
+3:: c)
+
+4:: a)
+
+5::
+a) foldr (++) "" ["woot", "WOOT", "woot"]
+b) foldr max ' ' "fear is the little death"
+c) foldr (&&) True [False, False]
+d) foldr (||) False [False, True]
+e) foldl (flip $ (++) . show) "" [1..5]
+f) foldl const 'a' [1..5]
+g) foldl const 0 "tacos"
+h) foldr (flip const) 0 "burritos"
+i) foldr (flip const) 'z' [1..5]
+
+== 10.6 How to write fold functions
+
+=== Exercise: Database Processing
+
+.1.
+[source, haskell]
+----
+filterDbDate :: [DatabaseItem] -> [UTCTime]
+filterDbDate =
+  let
+    f :: DatabaseItem -> [UTCTime] -> [UTCTime]
+    f x xs =
+      case x of
+        DbDate d -> [d] ++ xs
+        _ -> xs
+  in
+    foldr f []
+----
+
+.2.
+[source, haskell]
+----
+filterDbNumber :: [DatabaseItem] -> [Integer]
+filterDbNumber =
+  let
+    f :: DatabaseItem -> [Integer] -> [Integer]
+    f x xs =
+      case x of
+        DbNumber d -> [d] ++ xs
+        _ -> xs
+  in
+    foldr f []
+----
+
+.3.
+[source, haskell]
+----
+{-- probably very naive --}
+mostRecent :: [DatabaseItem] -> UTCTime
+mostRecent = (\(DbDate x) -> x) . maximum
+
+mostRecent' :: [DatabaseItem] -> UTCTime
+mostRecent' = maximum . filterDbDate
+----
+
+.4.
+[source, haskell]
+sumDb :: [DatabaseItem] -> Integer
+sumDb = sum . filterDbNumber
+
+.5.
+[source, haskell]
+avgDb :: [DatabaseItem] -> Double
+avgDb xs =
+  let
+    ds = filterDbNumber xs
+  in
+   fromIntegral (sum ds) / fromIntegral (length ds)
+
+== 10.9 Scans 
+
+=== Scans Exercises
+
+.1. 
+[source, haskell]
+fibs' :: [Integer]
+fibs' =
+  take 20 fibs
+
+.2.
+[source, haskell]
+fibs'' :: [Integer]
+fibs'' = takeWhile (<100) fibs
+
+.3.
+[source, haskell]
+{-- can't think how an infinite list would help? --}
+factorial :: Integer -> Integer
+factorial n =
+  last $ scanl (*) 1 [1..n]
+
+== 10.10 Chapter Exercises
+
+=== Warm-up and review
+
+
+.1a.
+[source, haskell]
+----
+stops = "pbtdkg"
+vowels = "aeiou"
+
+combos =
+  functionMap (functionMap (map (,,) stops) vowels) stops
+
+functionMap :: [(a -> b)] -> [a] -> [b]
+functionMap _ [] = []
+functionMap [] _ = []
+functionMap (f:fs) xs =
+  map f xs ++ functionMap fs xs
+----
+
+.1b.
+[source, haskell]
+onlyPs =
+  filter (\(a, _, _) -> a == 'p') combos
+
+.1c.
+[source, haskell]
+combos :: [a] -> [b] -> [(a, b, a)]
+combos xs ys =
+  functionMap (functionMap (map (,,) xs) ys) xs
+
+.2.
+
+The function calculates the average length of words in a string.
+The type is `String -> Int`
+
+.3.
+[source, haskell]
+seekrit :: Fractional a => String -> a
+seekrit x =
+  fromIntegral (sum (map length (words x))) / fromIntegral (length (words x))
+
+=== Rewriting functions using folds
+
+.1.
+[source, haskell]
+myOr :: [Bool] -> Bool
+myOr =
+  foldr (||) False
+
+.2.
+[source, haskell]
+myAny :: (a -> Bool) -> [a] -> Bool
+myAny =
+  flip foldr False . ((||) . )
+
+.3.
+[source, haskell]
+----
+myElem :: Eq a => a -> [a] -> Bool
+myElem =
+  flip foldr False . ((||) .) . (==)
+
+myElem' :: Eq a => a -> [a] -> Bool
+myElem' = any . (==)
+----
+
+.4.
+[source, haskell]
+myReverse :: [a] -> [a]
+myReverse =
+  foldl (flip (:)) []
+
+.5.
+[source, haskell]
+myMap :: (a -> b) -> [a] -> [b]
+myMap =
+  flip foldr [] . ((:) . )
+
+.6.
+[source, haskell]
+{-- Pass on pointfree. Ouch! --}
+myFilter :: (a -> Bool) -> [a] -> [a]
+myFilter f =
+  foldr (\x xs -> if f x then (x:xs) else xs) []
+
+.7.
+[source, haskell]
+squish :: [[a]] -> [a]
+squish =
+  foldr (++) []
+
+.8.
+[source, haskell]
+squishMap :: (a -> [b]) -> [a] -> [b]
+squishMap =
+  flip foldr [] . ((++) . )
+
+.9.
+[source, haskell]
+squishAgain :: [[a]] -> [a]
+squishAgain =
+  squishMap id
+
+.10.
+[source, haskell]
+{-- Pass on pointfree. Ouch! --}
+myMaximumBy :: (a -> a -> Ordering) -> [a] -> a
+myMaximumBy f (x : xs) =
+  foldl (\acc a -> if f acc a == GT then acc else a) x xs
+
+.11.
+[source, haskell]
+{-- Pass on pointfree. Ouch! --}
+myMinimumBy :: (a -> a -> Ordering) -> [a] -> a
+myMinimumBy f (x : xs) =
+  foldl (\acc a -> if f acc a == LT then acc else a) x xs
