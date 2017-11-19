@@ -1,0 +1,249 @@
+= 12. Signaling Adversity
+
+== 12.5 Chapter Exercises
+
+=== Determine the Kinds
+
+1. *
+2. a is *, f a is * -> *
+
+=== String processing
+
+.1.
+
+[source, haskell]
+replaceThe :: String -> String
+replaceThe [] = []
+replaceThe xs =
+  let
+    (w:ws) = words xs
+    f s =
+      case notThe s of
+        Just x -> x
+        Nothing -> "a"
+  in
+    f w ++ " " ++ replaceThe (concat . intersperse " " $ ws)
+
+.2.
+
+[source, haskell]
+countTheBeforeVowel :: String -> Integer
+countTheBeforeVowel [] = 0
+countTheBeforeVowel ('t':'h':'e':' ':x:xs) =
+  if x `elem` "aeiou"
+  then 1 + countTheBeforeVowel xs
+  else countTheBeforeVowel xs
+countTheBeforeVowel (x:xs) =
+  countTheBeforeVowel xs
+
+.3.
+
+[source, haskell]
+countVowels :: String -> Integer
+countVowels =
+  let
+    f a b =
+      if a `elem` "aeiou"
+      then 1 + b
+      else 0 + b
+  in
+    foldr f 0
+
+=== Validate the word
+
+[source, haskell]
+mkWord :: String -> Maybe Word'
+mkWord xs =
+  let
+      v = length $ filter (flip elem vowels) xs
+      c = length xs - v
+  in
+    if v > c
+    then Nothing
+    else Just (Word' xs)
+
+=== It's only Natural
+
+[source, haskell]
+integerToNat :: Integer -> Maybe Nat
+integerToNat i =
+  let
+    go 0 = Zero
+    go n = Succ $ go (n - 1)
+  in
+    if i < 0
+    then Nothing
+    else Just (go i)
+
+=== Small library for Maybe
+
+.1.
+
+[source, haskell]
+----
+isJust :: Maybe a -> Bool
+isJust Nothing = False
+isJust (Just x) = True
+
+isNothing :: Maybe a -> Bool
+isNothing Nothing = True
+isNothing (Just x) = False
+----
+
+.2.
+
+[source, haskell]
+mayybee :: b -> (a -> b) -> Maybe a -> b
+mayybee z f Nothing = z
+mayybee z f (Just x) = f x
+
+.3.
+
+[source, haskell]
+fromMaybe :: a -> Maybe a -> a
+fromMaybe a Nothing = a
+fromMaybe _ (Just x) = x
+
+.4.
+
+[source, haskell]
+----
+listToMaybe :: [a] -> Maybe a
+listToMaybe [] = Nothing
+listToMaybe (x:_) = Just x
+
+maybeToList :: Maybe a -> [a]
+maybeToList Nothing = []
+maybeToList (Just x) = [x]
+----
+
+.5.
+
+[source, haskell]
+catMaybes :: [Maybe a] -> [a]
+catMaybes =
+  let
+    f Nothing xs = xs
+    f (Just x) xs = x : xs
+  in
+    foldr f []
+
+.6.
+
+[source, haskell]
+----
+flipMaybe :: [Maybe a] -> Maybe [a]
+flipMaybe [] = Just []
+flipMaybe (Nothing : xs) = Nothing
+flipMaybe ((Just x) : xs ) =
+  maybeMap (x : ) (flipMaybe xs)
+
+maybeMap :: (a -> b) -> Maybe a -> Maybe b
+maybeMap f Nothing = Nothing
+maybeMap f (Just x) = Just (f x)
+----
+
+=== Small Library for Either
+
+.1.
+
+[source, haskell]
+lefts' :: [Either a b] -> [a]
+lefts' =
+  let
+    f (Left x) xs = x : xs
+    f (Right x) xs = xs
+  in
+    foldr f []
+
+.2.
+
+[source, haskell]
+rights' :: [Either a b] -> [b]
+rights' =
+  let
+    f (Left x) xs = xs
+    f (Right x) xs = x : xs
+  in
+    foldr f []
+
+.3.
+
+[source, haskell]
+partitionEithers' :: [Either a b] -> ([a], [b])
+partitionEithers' xs =
+  (lefts' xs, rights' xs)
+
+.4.
+
+[source, haskell]
+eitherMaybe' :: (b -> c) -> Either a b -> Maybe c
+eitherMaybe' f (Left a) = Nothing
+eitherMaybe' f (Right b) = Just (f b)
+
+.5.
+
+[source, haskell]
+either' :: (a -> c) -> (b -> c) -> Either a b -> c
+either' l _ (Left a) = l a
+either' _ r (Right b) = r b
+
+.6.
+
+[source, haskell]
+eitherMaybe'' :: (b -> c) -> Either a b -> Maybe c
+eitherMaybe'' f =
+  either' (const Nothing) (Just . f)
+
+=== Unfolds
+
+.1.
+
+[source, haskell]
+myIterate :: (a -> a) -> a -> [a]
+myIterate f z =
+  z : myIterate f (f z)
+
+.2.
+
+[source, haskell]
+myUnfoldr :: (b -> Maybe (a, b)) -> b -> [a]
+myUnfoldr f z =
+  case f z of
+    Just (x, y) ->
+      x : myUnfoldr f y
+    Nothing ->
+      []
+
+.3.
+
+[source, haskell]
+betterIterate :: (a -> a) -> a -> [a]
+betterIterate f z =
+  myUnfoldr (\b -> Just (b, f b)) z
+
+== Finally, something other than a list!
+
+.1.
+
+[source, haskell]
+unfold :: (a -> Maybe (a, b, a)) -> a -> BinaryTree b
+unfold f z =
+  case f z of
+    Just (a, b, c) ->
+      Node (unfold f a) b (unfold f c)
+    Nothing ->
+      Leaf
+
+.2.
+
+[source, haskell]
+treeBuild :: Integer -> BinaryTree Integer
+treeBuild n =
+  let
+    f x =
+      if x >= n
+      then Nothing
+      else Just (x + 1, x, x + 1)
+  in
+    unfold f 0
