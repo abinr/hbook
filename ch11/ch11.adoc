@@ -1,0 +1,430 @@
+= 11. Algebraic datatypes
+
+== 11.5 Data constructors and values
+
+=== Exercises: Dog Types
+
+1. `Doggies` is a type constructor
+2. The kind of `Doggies` is `* -> *`
+3. The kind of `Doggies String` is `*`
+4. The type of `Husky 10` is `Num a => Doggies a`
+5. The type of `Husky (10 :: Integer)` is `Doggies Integer`
+6. The type of `Mastiff "Scooby Doo"` is `Doggies [Char]`
+7. `DogueDeBordeaux` is both a type and dataconstructor
+8. The type of `DogueDeBordeaux` is `doge -> DogueDeBordeaux doge`
+9. The type of `DogueDeBordeaux "doggie!" is `DogueDeBordeaux [Char]`
+
+== 11.6 What's a type and what's data
+
+=== Exercises: Vehicles
+
+
+.1.
+The type of `myCar` is `Vehicle`
+
+.2. 
+[source, haskell]
+----
+isCar :: Vehicle -> Bool
+isCar (Car _ _) = True
+isCar _ = False
+
+isPlane :: Vehicle -> Bool
+isPlane (Plane _) = True
+isPlane _ = False
+
+areCars :: [Vehicle] -> [Bool]
+areCars =
+  map isCar
+----
+
+.3.
+[source, haskell]
+getManu :: Vehicle -> Maybe Manufacturer
+getManu (Car x _) = Just x
+getManu _ = Nothing
+
+.4.
+I wrote the function to return `Maybe` so `Nothing`
+
+.5. 
+[source, haskell]
+----
+data Vehicle
+  = Car Manufacturer Price
+  | Plane Airline Size
+  deriving (Eq, Show)
+
+data Size
+  = TooBig
+  | TooSmall
+  | JustRight
+  deriving (Eq, Show)
+----
+
+== 11.8 What makes these datatypes algebraic?
+
+=== Exercises: Cardinality
+
+1. 1
+2. 3
+3. 65536
+4. Int has a large cardinality. Integer is not an instance of Bounded, so as long as RAM is available, it's infinite.
+5. It's 2 ^ 8, cuz y'know like the Cyber is all binary and stuff.
+
+
+=== Exercises: For Example
+
+1. The type of `MakeExample` is `Example`. Querying the :type of `Example` returns an error "Data constructor not in scope." 
+
+2. Querying `Example` for :info returns its declaration, instances it defines and the source locations.
+
+3. The `MakeExample` data constructor now requires an argument (has unary arity)
+
+== 11.9 newtype
+
+=== Exercises: Logic Goats
+
+.1.
+[source, haskell]
+----
+newtype IntString = IntString (Int, String) deriving Show
+
+instance TooMany IntString where
+  tooMany (IntString (i, s)) = i > 10
+----
+
+.2.
+[source, haskell]
+----
+newtype IntPair = IntPair (Int, Int) deriving Show
+
+instance TooMany IntPair where
+  tooMany (IntPair (i, j)) = i + j > 47
+----
+
+.3. 
+[source, haskell]
+{-- FlexibleInstances enabled --}
+instance (Num a, TooMany a) => TooMany (a, a) where
+  tooMany (x, y) = tooMany (x + y)
+
+== 11.10 Sum Types
+
+=== Exercise: Pity the Bool
+
+.1.
+....
+Big Bool + Small Bool
+   2     +      2
+         4
+....
+
+.2.
+....
+Numba Int8 | BoolyBool Bool
+    256    +    2
+          258
+....
+
+== 11.12 Normal Form
+
+=== Exercises: How does your Garden Grow?
+
+.1.
+[source, haskell]
+data Garden
+  = Gardenia Gardener
+  | Daisy Gardener
+  | Rose Gardener
+  | Lilac Gardener
+  deriving Show
+
+== 11.13 Constructing and deconstrucing values
+
+=== Exercise: Programmers
+
+[source, haskell]
+----
+allProgrammers :: [Programmer]
+allProgrammers =
+  let
+    functionMap :: [(a -> b)] -> [a] -> [b]
+    functionMap [] _ = []
+    functionMap (f:fs) xs =
+      map f xs ++ functionMap fs xs
+  in
+    functionMap (map Programmer allOperatingSystems) allLanguages
+
+λ> length allProgrammers
+16
+λ> (length allOperatingSystems) * (length allLanguages)
+16
+----
+
+== 11.14 Function type is exponential
+
+=== Exponentiation in what order?
+
+[source, haskell]
+----
+convert1 :: Quantum -> Bool
+convert1 Yes = True
+convert1 No = True
+convert1 Both = True
+
+convert2 :: Quantum -> Bool
+convert2 Yes = False
+convert2 No = False
+convert2 Both = False
+
+convert3 :: Quantum -> Bool
+convert3 Yes = True
+convert3 No = False
+convert3 Both = False
+
+convert4 :: Quantum -> Bool
+convert4 Yes = False
+convert4 No = True
+convert4 Both = False
+
+convert5 :: Quantum -> Bool
+convert5 Yes = False
+convert5 No = False
+convert5 Both = True
+
+convert6 :: Quantum -> Bool
+convert6 Yes = True
+convert6 No = True
+convert6 Both = False
+
+convert7 :: Quantum -> Bool
+convert7 Yes = True
+convert7 No = False
+convert7 Both = True
+
+convert8 :: Quantum -> Bool
+convert8 Yes = True
+convert8 No = True
+convert8 Both = False
+----
+
+=== Exercises: The Quad
+
+1. `Quad` inhabitants = 4. `eQuad` can take 2 * 4 * 4 = 32 forms.
+2. `prodQuad` inhabitants = 4 * 4 = 16
+3. `funcQuad` inhabitants = 4 ^ 4 = 256
+4. `prodTBool` inhabitants = 2 * 2 * 2 = 8
+5. `gTwo` inhabitants = (2 ^ 2) ^ 2  = 16
+6. `fTwo` inhabitatnts = (4 ^ 4) ^ 2 = 65546
+
+=== Write `map` for BinaryTree
+
+[source, haskell]
+----
+mapTree :: (a -> b) -> BinaryTree a -> BinaryTree b
+mapTree _ Leaf = Leaf
+mapTree f (Node left a right) =
+  Node (mapTree f left) (f a) (mapTree f right)
+----
+
+=== Convert binary trees to lists
+
+[source, haskell]
+----
+preorder :: BinaryTree a -> [a]
+preorder Leaf = []
+preorder (Node left a right) =
+  [a] ++ preorder left ++ preorder right
+
+inorder :: BinaryTree a -> [a]
+inorder Leaf = []
+inorder (Node left a right) =
+  inorder left ++ [a] ++ inorder right
+
+postorder :: BinaryTree a -> [a]
+postorder Leaf = []
+postorder (Node left a right) =
+  inorder left ++ inorder right ++ [a]
+----
+
+=== Write foldr for binary tree
+
+[source, haskell]
+foldTree :: (a -> b -> b) -> b -> BinaryTree a -> b
+foldTree _ z Leaf = z
+foldTree f z (Node left x right) =
+  f x (foldTree f (foldTree f z right) left)
+
+== 11.18 Chapter Exercises
+
+=== Multiple Choice
+
+1. a)
+2. c)
+3. b)
+4. c)
+
+=== Ciphers
+
+See vignere.hs
+
+=== As-Patterns
+
+.1.
+
+[source, haskell]
+{-- Why do I need the as-pattern? Tried for 1.5 hrs to figure it out, no avail --}
+isSubseqOf' :: (Eq a) => [a] -> [a] -> Bool
+isSubseqOf' xs ys =
+  xs == concat (foldr (\a b -> filter (== a) xs : b) [] ys)
+
+.2.
+
+[source, haskell]
+capitalizeWords :: String -> [(String, String)]
+capitalizeWords s =
+  let
+    f t@(x:xs) =
+      (t, (toUpper x) : xs)
+  in
+    map f $ words s
+
+=== Language Exercises
+
+.1.
+
+[source, haskell]
+capitalizeWord :: String -> String
+capitalizeWord [] = []
+capitalizeWord (x:xs) =
+  (toUpper x) : xs
+
+.2.
+
+[source, haskell]
+----
+capitalizeParagraph :: String -> String
+capitalizeParagraph =
+  reverse
+  . ((:) '.')
+  . reverse
+  . intercalate ". "
+  . map (capitalizeWord . dropWhile (== ' '))
+  . sentences
+
+sentences :: String -> [String]
+sentences [] = []
+sentences ('.':xs) =
+  sentences xs
+sentences xs =
+  takeWhile (/= '.') xs : sentences (dropWhile (/= '.') xs)
+----
+
+=== Phone Exercise
+
+.1 and 2.
+
+[source, haskell]
+----
+module Phone where
+
+import Data.Char (isUpper, toLower)
+import Data.List (elemIndex)
+import Data.Maybe (catMaybes)
+
+type DaPhone = [(Char, String)]
+type Digit = Char
+type Presses = Int
+
+cellPhonesDead :: DaPhone -> String -> [(Digit, Presses)]
+cellPhonesDead phone =
+  concatMap (reverseTaps phone)
+
+reverseTaps :: DaPhone -> Char -> [(Digit, Presses)]
+reverseTaps phone c =
+  if isUpper c
+  then [('*', 1)] ++ quest (toLower c) phone
+  else quest c phone
+
+quest :: Char -> DaPhone -> [(Digit, Presses)]
+quest c =
+  map (\(d, Just p) -> (d, p + 1))
+  . filter ((/= Nothing) . snd)
+  . map (\(k, v) -> (k, c `elemIndex` v))
+
+keymap :: [(Char, String)]
+keymap =
+    [ ('0', " ")
+    , ('1', "1")
+    , ('2', "abc2")
+    , ('3', "def3")
+    , ('4', "ghi4")
+    , ('5', "jkl5")
+    , ('6', "mno6")
+    , ('7', "qrs7")
+    , ('8', "tuv8")
+    , ('9', "wxyz9")
+    , ('#', ".,")
+    ]
+----
+
+.3.
+
+[source, haskell]
+fingerTaps :: [(Digit, Presses)] -> Presses
+fingerTaps =
+  sum . map snd
+
+.4.
+
+[source, haskell]
+----
+-- doesn't account for ties
+mostPopularLetter :: String -> Char
+mostPopularLetter =
+  head . maximumBy (\x y -> compare (length x) (length y)) . group . sort
+
+letterCost :: Char -> Presses
+letterCost =
+  fingerTaps . reverseTaps keymap
+
+λ> map (letterCost . mostPopularLetter) convo
+[2,1,2,1,3,1,1,3,1]
+----
+
+.5.
+
+[source, haskell]
+----
+coolestWord :: [String] -> String
+coolestWord =
+  head
+  . maximumBy (\x y -> compare (length x) (length y))
+  . group . sort . concat . map words
+
+coolestLtr :: [String] -> Char
+coolestLtr =
+  mostPopularLetter . filter isLetter . concat
+----
+
+=== Hutton's Razor
+
+.1.
+[source, haskell]
+eval :: Expr -> Integer
+eval (Lit x) = x
+eval (Add a b) = eval a + eval b
+
+.2.
+[source, haskell]
+----
+data Expr
+  = Lit Integer
+  | Add Expr Expr
+  deriving Show
+
+printExpr :: Expr -> String
+printExpr (Lit x) = show x
+printExpr (Add a b) = show a ++ "+" ++ show b
+----
