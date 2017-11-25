@@ -1,0 +1,88 @@
+= 13. Building projects
+
+== 13.4 Chapter Exercises
+
+=== Wordguess game logic
+
+See `guess` game source code
+
+=== Modifying code
+
+.1.
+
+[source, haskell]
+----
+-- caesar.hs
+main :: IO ()
+main = do
+  putStrLn "Enter plain text: "
+  t <- getLine
+  putStrLn "Enter shift: "
+  s <- getChar
+  let c = caesar (digitToInt s) t
+  putStrLn $ "Cipher text: " ++ c
+
+-- vingere.hs
+main :: IO ()
+main = do
+  putStrLn "Enter plain text: "
+  t <- getLine
+  putStrLn "Enter salt: "
+  s <- getLine
+  let r = vigenere t s
+  putStrLn $ "Cipher text: " ++ r
+
+----
+
+.2.
+
+[source, haskell]
+----
+import Control.Monad
+import System.Exit
+
+palindrome :: IO ()
+palindrome = forever $ do
+  line1 <- getLine
+  case (line1 == reverse line1) of
+    True -> do
+      putStrLn "It's a palindrome."
+    False -> do
+      putStrLn "Nope!"
+      exitSuccess
+----
+
+.3.
+
+[source, haskell]
+----
+import Control.Monad
+import System.Exit
+import Data.Char
+
+palindrome :: IO ()
+palindrome = forever $ do
+  line1 <- getLine
+  let t = map toLower . filter isLetter $ line1
+  case (t == reverse t) of
+    True -> do
+      putStrLn "It's a palindrome."
+    False -> do
+      putStrLn "Nope!"
+      exitSuccess
+----
+
+.4.
+
+[source, haskell]
+gimmePerson :: IO ()
+gimmePerson = do
+  putStrLn "Enter name: "
+  name <- getLine
+  putStrLn "Enter age: "
+  age <- getLine
+  case mkPerson name (read age :: Integer) of
+    Right x ->
+      putStrLn $ "Yay! " ++ (show x)
+    Left e ->
+      putStrLn $ "Error: " ++ (show e)

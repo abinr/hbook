@@ -1,6 +1,6 @@
-module Caesar where
+module Main where
 
-import Data.Char (ord, chr, isUpper)
+import Data.Char (ord, chr, isUpper, digitToInt)
 import Data.Bool
 
 type Shift = Int
@@ -35,3 +35,12 @@ toScale26 c =
 fromScale26 :: Int -> Char
 fromScale26 i =
   chr (ord 'A' + i)
+
+main :: IO ()
+main = do
+  putStrLn "Enter plain text: "
+  t <- getLine
+  putStrLn "Enter shift: "
+  s <- getChar
+  let c = caesar (digitToInt s) t
+  putStrLn $ "Cipher text: " ++ c

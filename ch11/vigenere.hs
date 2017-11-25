@@ -1,4 +1,4 @@
-module Vigenere where
+module Main where
 
 import Data.Char (ord, chr, isUpper)
 import Data.Bool
@@ -57,3 +57,12 @@ toScale26 c =
 fromScale26 :: Int -> Char
 fromScale26 i =
   chr (ord 'A' + i)
+
+main :: IO ()
+main = do
+  putStrLn "Enter plain text: "
+  t <- getLine
+  putStrLn "Enter salt: "
+  s <- getLine
+  let r = vigenere t s
+  putStrLn $ "Cipher text: " ++ r
