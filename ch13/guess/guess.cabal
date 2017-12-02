@@ -20,3 +20,5 @@ executable guess
                      , random
                      , split
                      , containers
+                     , hspec >= 2.4
+

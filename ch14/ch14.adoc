@@ -1,0 +1,243 @@
+= 14. Testing
+
+== 14.3 Conventional Testing
+
+=== Intermission: Short Exercise
+
+[source, haskell]
+    it "3 times 4 is 12" $ do
+      multx 3 4 `shouldBe` 12
+    it "1 times 1 is 1" $ do
+      multx 1 1 `shouldBe` 1
+
+== 14.7 Chapter Exercises
+
+=== Validating numbers into words
+
+[source, haskell]
+----
+main :: IO ()
+main = hspec $ do
+  describe "digitToWord" $ do
+    it "returns zero for 0" $ do
+      digitToWord 0 `shouldBe` "zero"
+    it "return one for 1" $ do
+      digitToWord 1 `shouldBe` "one"
+
+  describe "digits" $ do
+    it "returns [1] for 1" $ do
+      digits 1 `shouldBe` [1]
+    it "returns [1, 0, 0] for 100" $ do
+      digits 100 `shouldBe` [1, 0, 0]
+
+  describe "wordNumber" $ do
+    it "one-zero-zero given 100" $ do
+      wordNumber 100 `shouldBe` "one-zero-zero"
+    it "nine-zero-zero-one for 9001" $ do
+      wordNumber 9001 `shouldBe` "nine-zero-zero-one"
+----
+
+=== Using QuickCheck
+
+.1. 
+
+[source, haskell]
+λ> quickCheck $ \x -> x == ((*2) $ half x)
++++ OK, passed 100 tests.
+
+.2.
+
+[source, haskell]
+λ> quickCheck listOrdered
++++ OK, passed 100 tests.
+
+.3.
+
+[source, haskell]
+λ> quickCheck plusAssociative
++++ OK, passed 100 tests.
+λ> quickCheck plusCommutative
++++ OK, passed 100 tests.
+
+.4.
+
+[source, haskell]
+----
+multAssoc :: Integral a => a -> a -> a -> Bool
+multAssoc x y z =
+  x * (y * z) == (x * y) * z
+
+multComm :: Integral a => a -> a -> Bool
+multComm x y =
+  x * y == y * x
+
+λ> quickCheck multAssoc
++++ OK, passed 100 tests.
+λ> quickCheck multComm
++++ OK, passed 100 tests.
+----
+
+.5.
+
+[source, haskell]
+----
+quotRemProp :: Integral a => a -> NonZero a -> Bool
+quotRemProp x (NonZero y) =
+  x == (quot x y) * y + (rem x y)
+
+divModProp :: Integral a => a -> NonZero a -> Bool
+divModProp x (NonZero y) =
+  x == (div x y) * y + (mod x y)
+
+λ> quickCheck quotRemProp
++++ OK, passed 100 tests.
+λ> quickCheck divModProp
++++ OK, passed 100 tests.
+----
+
+.6.
+
+[source, haskell]
+----
+minusAssociative :: Integral a => a -> a -> a -> Bool
+minusAssociative x y z =
+  x - (y - z) == (x - y) - z
+
+λ> quickCheck minusAssociative
+*** Failed! Falsifiable (after 4 tests and 5 shrinks): 
+0
+0
+1
+----
+
+.7.
+
+[source, haskell]
+λ> quickCheck $ \xs -> (reverse $ reverse xs) == id xs
++++ OK, passed 100 tests.
+
+.8.
+
+[source, hasekll]
+----
+λ> quickCheck $ \x -> id $ x == id x
++++ OK, passed 100 tests.
+
+λ> f = (+3)
+λ> g = (*2)
+λ> quickCheck $ \x -> (f . g) x == f (g x)
++++ OK, passed 100 tests.
+----
+
+.9.
+
+[source, haskell]
+λ> quickCheck $ \xs -> foldr (:) xs xs == xs ++ xs
++++ OK, passed 100 tests.
+
+.10.
+
+[source, haskell]
+λ> quickCheck $ \n xs -> length (take n xs) == n
+*** Failed! Falsifiable (after 2 tests): 
+1
+[]
+
+.11.
+
+[source, haskell]
+λ> quickCheck $ forAll (arbitrary :: Gen Int) $ (\x -> read (show x) == x)
++++ OK, passed 100 tests.
+λ> quickCheck $ forAll (arbitrary :: Gen Char) $ (\x -> read (show x) == x)
++++ OK, passed 100 tests.
+λ> quickCheck $ forAll (arbitrary :: Gen String) $ (\x -> read (show x) == x)
++++ OK, passed 100 tests.
+
+=== Failure
+
+.squareIdentity
+
+[source, haskell]
+λ> x = sqrt 6
+λ> x
+2.449489742783178
+λ> square x
+5.999999999999999
+
+=== Idempotence
+
+(uh...is this all I have to do here?)
+
+[source, haskell]
+λ> quickCheck f
++++ OK, passed 100 tests.
+λ> quickCheck f'
++++ OK, passed 100 tests.
+
+=== Make a Gen random generator for the datatype
+
+.1.
+
+[source, haskell]
+foolGen :: Gen Fool
+foolGen = elements [Fulse, Frue]
+
+.2.
+
+[source, haskell]
+----
+instance Arbitrary Fool where
+  arbitrary = foolGen
+
+foolGen' :: Gen Fool
+foolGen' = do
+  frequency [(2, return Fulse), (1, return Frue)]
+----
+
+=== WordGuess Testing
+
+[source, haskell]
+test :: IO ()
+test = hspec $ do
+  describe "Word Guess" $ do
+    it "should handle a guess already guessed" $ do
+      let p = (Puzzle "" "h")
+      newP <- handleGuess p 'h'
+      newP `shouldBe` p
+    it "should handle a correct guess" $ do
+      let p = (Puzzle "secret" "")
+      newP <- handleGuess p 'e'
+      newP `shouldBe` (Puzzle "secret" "e")
+    it "should handle an incorrect guess" $ do
+      let p = (Puzzle "secret" "")
+      newP <- handleGuess p 'z'
+      newP `shouldBe` (Puzzle "secret" "z")
+
+
+=== Validating Ciphers
+
+.Caesar.
+
+[source, haskell]
+----
+alphaStringGen :: Gen String
+alphaStringGen =
+  listOf $ choose ('A', 'Z')
+
+λ> quickCheck $ forAll alphaStringGen (\x -> decaesar 16 (caesar 16 x) == x)
++++ OK, passed 100 tests.
+----
+
+.Vigenere.
+
+[source, haskell]
+----
+validInputGen :: Gen String
+validInputGen =
+  listOf1 $ elements $ ['A'..'Z'] ++ [' ']
+
+λ> salt = "LOVE"
+λ> prop = forAll validInputGen (\x -> devigenere (vigenere x salt) salt == x)
+λ> quickCheck prop
++++ OK, passed 100 tests.
+----

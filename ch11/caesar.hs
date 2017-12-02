@@ -1,7 +1,8 @@
 module Main where
 
-import Data.Char (ord, chr, isUpper, digitToInt)
+import Data.Char (ord, chr, isUpper, digitToInt, isLetter)
 import Data.Bool
+import Test.QuickCheck
 
 type Shift = Int
 type PlainText = String
@@ -44,3 +45,7 @@ main = do
   s <- getChar
   let c = caesar (digitToInt s) t
   putStrLn $ "Cipher text: " ++ c
+
+alphaStringGen :: Gen String
+alphaStringGen =
+  listOf $ choose ('A', 'Z')

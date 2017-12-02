@@ -2,6 +2,7 @@ module Main where
 
 import Data.Char (ord, chr, isUpper)
 import Data.Bool
+import Test.QuickCheck
 
 (|>) :: a -> (a -> b) -> b
 (|>) x f = f x
@@ -27,6 +28,10 @@ devigenere cipher salt =
   |> map (\(x, y) -> (toScale26 x, [y]))
   |> map (uncurry decaesar)
   |> concat
+
+validInputGen :: Gen String
+validInputGen =
+  listOf1 $ elements $ ['A'..'Z'] ++ [' ']
 
 type Shift = Int
 type PlainText = String

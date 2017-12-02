@@ -36,7 +36,9 @@ randomWord' =
 type Solution = String
 type Guesses = [Char]
 
-data Puzzle = Puzzle Solution Guesses
+data Puzzle
+  = Puzzle Solution Guesses
+  deriving (Eq)
 
 instance Show Puzzle where
   show puzzle =
