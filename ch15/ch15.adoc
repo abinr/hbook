@@ -1,0 +1,156 @@
+= 15. Monoid, Semigroup
+
+== 15.10 Reusing algebras by asking for algebras
+
+=== Exercise: Optional Monoid
+
+[source, haskell]
+instance Monoid a => Monoid (Optional a) where
+  mempty = mempty
+  mappend Nada Nada = Nada
+  mappend Nada (Only x) = Only x
+  mappend (Only x) Nada = Only x
+  mappend (Only x) (Only y) = Only (x `mappend` y)
+
+== 15.11 Madness
+
+[source, haskell]
+madlibbin :: Exclamation -> Adverb -> Noun -> Adjective -> String
+madlibbin e adv noun adj =
+  mconcat
+    [ e
+    , "! he said "
+    , adv
+    , " as he jumped into his car "
+    , noun
+    , " and drove off with his "
+    , adj
+    , " wife."
+    ]
+
+== 15.12 Better living through QuickCheck
+
+=== Exercise: Maybe another Monoid
+
+[source, haskell]
+instance Monoid (First' a) where
+  mempty = First' Nada
+  mappend (First' Nada) (First' Nada) = First' Nada
+  mappend (First' (Only x)) (First' Nada) = First' (Only x)
+  mappend (First' Nada) (First' (Only x)) = First' (Only x)
+  mappend (First' (Only x)) (First' (Only _)) = First' (Only x)
+
+== 15.15 Chapter Exercises
+
+=== Semigroup Exercises
+
+.1.
+[source, haskell]
+instance Semigroup Trivial where
+  _ <> _ = Trivial
+
+.2.
+[source, haskell]
+----
+instance (Semigroup a) => Semigroup (Identity a) where
+  (Identity x) <> (Identity y) = Identity ( x <> y)
+
+λ> quickCheck (semigroupAssoc :: Identity String -> Identity String -> Identity String -> Bool)
++++ OK, passed 100 tests.
+----
+
+.3.
+[source, haskell]
+----
+instance (Semigroup a, Semigroup b) => Semigroup (Two a b) where
+  (Two a b) <> (Two c d) = Two (a <> c) (b <> d)
+
+λ> quickCheck (semigroupAssoc :: Two String String -> Two String String -> Two String String -> Bool)
++++ OK, passed 100 tests.
+----
+
+.4.
+[source, haskell]
+----
+type ThreeAssoc = Three String String String ->
+                  Three String String String ->
+                  Three String String String ->
+                  Bool
+
+instance (Semigroup a, Semigroup b, Semigroup c) => Semigroup (Three a b c) where
+  (Three a b c) <> (Three d e f) = Three (a <> d) (b <> e) (c <> f)
+
+λ> quickCheck (semigroupAssoc :: ThreeAssoc)
++++ OK, passed 100 tests.
+----
+
+.5.
+[source, haskell]
+----
+instance
+  (Semigroup a
+  , Semigroup b
+  , Semigroup c
+  , Semigroup d) =>
+  Semigroup (Four a b c d) where
+  (Four a b c d) <> (Four a' b' c' d') =
+    Four (a <> a') (b <> b') (c <> c') (d <> d')
+
+λ> quickCheck (semigroupAssoc :: FourAssoc)
++++ OK, passed 100 tests.
+----
+
+.6. 
+[source, haskell]
+----
+instance Semigroup BoolConj where
+  BoolConj True <> BoolConj True = BoolConj True
+  BoolConj False <> BoolConj _ = BoolConj False
+  BoolConj _ <> BoolConj False = BoolConj False
+
+λ> quickCheck (semigroupAssoc :: BoolConj -> BoolConj -> BoolConj -> Bool)
++++ OK, passed 100 tests.
+----
+
+.7.
+[source, haskell]
+----
+instance Semigroup BoolDisj where
+  BoolDisj True <> BoolDisj _ = BoolDisj True
+  BoolDisj _ <> BoolDisj True = BoolDisj True
+  BoolDisj False <> BoolDisj False = BoolDisj False
+
+λ> quickCheck (semigroupAssoc :: BoolDisj -> BoolDisj -> BoolDisj -> Bool)
++++ OK, passed 100 tests.
+----
+
+.8.
+[source, haskell]
+----
+instance Semigroup (Or a b) where
+  Fst a <> Fst b = Fst b
+  Fst a <> Snd b = Snd b
+  Snd a <> Snd b = Snd b
+  Snd a <> Fst b = Snd a
+
+λ> quickCheck (semigroupAssoc :: (Or Int Bool) -> (Or Int Bool) -> (Or Int Bool) -> Bool)
++++ OK, passed 100 tests.
+----
+
+.9 & 10.
+----
+Unable to complete. Can't figure out how to use CoArbitrary or implement the Eq class constraint needed to test equality between associative combinations.
+----
+
+.11.
+[source, haskell]
+----
+instance (Semigroup a, Semigroup b) => Semigroup (Validation a b) where
+  (Failure' x) <> (Failure' y) = Failure' (x <> y)
+  (Success' x) <> (Failure' y) = Success' x
+  (Failure' x) <> (Success' y) = Success' y
+  (Success' x) <> (Success' y) = Success' x
+
+λ> quickCheck (semigroupAssoc :: ValidationAssoc)
++++ OK, passed 100 tests.
+----
