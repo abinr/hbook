@@ -154,3 +154,60 @@ instance (Semigroup a, Semigroup b) => Semigroup (Validation a b) where
 λ> quickCheck (semigroupAssoc :: ValidationAssoc)
 +++ OK, passed 100 tests.
 ----
+
+=== Monoid exercises
+
+.1.
+[source,haskell]
+instance Monoid Trivial where
+  mempty = Trivial
+  mappend = (<>)
+
+.2.
+[source, haskell]
+instance (Semigroup a, Monoid a) => Monoid (Identity a) where
+  mempty = Identity mempty
+  mappend = (<>)
+
+.3.
+[source, haskell]
+----
+instance (Semigroup a, Monoid a, Semigroup b, Monoid b) => Monoid (Two a b) where
+  mempty = Two (mempty) (mempty)
+  mappend = (<>)
+
+λ> quickCheck ( semigroupAssoc :: TwoAssoc)
++++ OK, passed 100 tests.
+λ> quickCheck (monoidLeftIdentity :: ((Two String [Int]) -> Bool))
++++ OK, passed 100 tests.
+λ> quickCheck (monoidRightIdentity :: ((Two String [Int]) -> Bool))
++++ OK, passed 100 tests.
+----
+
+.4.
+[source, haskell]
+instance Monoid BoolConj where
+  mempty = BoolConj True
+  mappend = (<>)
+
+.5.
+[source, haskell]
+instance Monoid BoolDisj where
+  mempty = BoolDisj False
+  mappend = (<>)
+
+.6. & .7.
+----
+Going to skip for now. Need to better understand CoArbitrary.
+----
+
+.8.
+[source, haskell]
+instance Monoid a => Monoid (Mem s a) where
+  mempty = Mem $ \s -> (mempty, s)
+  mappend (Mem x) (Mem y) = Mem $ \s ->
+    let
+      (a, s') = x s
+      (a', s'') = y s'
+    in
+      (a `mappend` a', s'')
