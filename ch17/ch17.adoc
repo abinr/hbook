@@ -1,0 +1,418 @@
+= 17. Applicative
+
+== 17.5 Applicatives in use
+
+=== Exercises: Lookups
+
+.1.
+[source, haskell]
+added :: Maybe Integer
+added =
+  pure (+3) <*> (lookup 3 $ zip [1,2,3] [4,5,6])
+
+.2.
+[source, haskell]
+tupled :: Maybe (Integer, Integer)
+tupled = pure (,) <*> y <*> z
+
+.3.
+[source, haskell]
+maxed :: Maybe Int
+maxed = pure max' <*> x <*> y'
+
+.4.
+[source, haskell]
+summed :: Maybe Integer
+summed = pure sum <*> (pure (,) <*> y <*> z)
+
+=== Exercises: Identity
+
+[source, haskell]
+----
+newtype Identity a
+  = Identity a
+  deriving (Eq, Show)
+
+instance Functor Identity where
+  fmap f (Identity x) = Identity (f x)
+
+instance Applicative Identity where
+  pure = Identity
+  Identity f <*> Identity x = Identity (f x)
+----
+
+=== Exercises: Constant Instance
+
+[source, haskell]
+----
+newtype Constant a b
+  = Constant { getConstant :: a }
+  deriving (Eq, Show)
+
+instance Functor (Constant a) where
+  fmap _ (Constant x) = Constant x
+
+instance Monoid a => Applicative (Constant a) where
+  pure _ = Constant mempty
+  (Constant x) <*> (Constant y) = Constant (x `mappend` y)
+----
+
+=== Exercises: Fixer Upper
+
+.1.
+[source, haskell]
+λ> const <$> Just "Hello" <*> pure "World"
+Just "Hello"
+
+.2.
+[source, haskell]
+λ> pure (,,,) <*> Just 90 <*> Just 10 <*> Just "Tierness" <*> pure [1,2,3]
+Just (90,10,"Tierness",[1,2,3])
+
+== 17.8 ZipList Monoid
+   
+=== List Applicative Exercise
+
+[source, haskell]
+----
+module List where
+
+data List a
+  = Nil
+  | Cons a (List a)
+  deriving (Eq, Show)
+
+instance Monoid (List a) where
+  mempty = Nil
+  mappend Nil x = x
+  mappend x Nil = x
+  mappend (Cons x xs) (Cons y ys) = Cons x (xs `mappend` (Cons y ys))
+
+instance Functor List where
+  fmap _ Nil = Nil
+  fmap f (Cons x xs) = Cons (f x) (fmap f xs)
+
+instance Applicative List where
+  pure x = Cons x Nil
+  _ <*> Nil = Nil
+  Nil <*> _ = Nil
+  (Cons f fs) <*> (Cons x xs) =
+    Cons (f x) (fmap f xs) `mappend` (fs <*> Cons x xs)
+
+import Data.Monoid
+quickBatch $ applicative (Cons ("h", "w", Sum 1) Nil)
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+=== ZipList Applicative Exercise
+
+[source, haskell]
+----
+newtype ZipList a
+  = ZipList (List a)
+  deriving (Eq, Show)
+
+instance Monoid a => Monoid (ZipList a) where
+  mempty = pure mempty
+  mappend = liftA2 mappend
+
+instance Functor ZipList where
+  fmap f (ZipList xs) = ZipList (fmap f xs)
+
+instance Applicative ZipList where
+  pure = ZipList . pure
+  (<*>) (ZipList Nil) _ = ZipList Nil
+  (<*>) _ (ZipList Nil) = ZipList Nil
+  (<*>) (ZipList (Cons f Nil)) (ZipList (Cons x xs)) =
+    ZipList $ Cons (f x) (pure f <*> xs)
+  (<*>) (ZipList (Cons f fs)) (ZipList (Cons x Nil)) =
+    ZipList $ Cons (f x) (fs <*> pure x)
+  (<*>) (ZipList (Cons f fs)) (ZipList (Cons x xs)) =
+    ZipList $ Cons (f x) (fs <*> xs)
+
+quickBatch $ applicative (ZipList $ Cons ("h", "b", Just 1) Nil)
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+=== Exercises: Variations on Either
+
+[source, haskell]
+----
+data Validation e a
+  = Failure e
+  | Success a
+  deriving (Eq, Show)
+
+instance Functor (Validation e) where
+  fmap _ (Failure x) = Failure x
+  fmap f (Success x) = Success (f x)
+
+instance Monoid e => Applicative (Validation e) where
+  pure = Success
+  Failure x <*> Failure y = Failure (x <> y)
+  Failure x <*> _ = Failure x
+  _ <*> Failure x = Failure x
+  Success f <*> Success x = Success (f x)
+
+quickBatch $ applicative (List.Success ("a", Just 1, [1]))
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+== 17.9 Chapter Exercises
+
+=== Type Specializations
+
+.1.
+[source, haskell]
+----
+-- []
+pureList :: a -> [a]
+pureList x = [x]
+
+apList :: [(a -> b)] -> [a] -> [b]
+apList [] _ = []
+apList _ [] = []
+apList (f:fs) xs =
+  fmap f xs <> (fs <*> xs)
+
+pureList (+) `apList` [1] `apList` [3]
+[4]
+----
+
+.2.
+[source, haskell]
+----
+-- IO
+pureIO :: a -> IO a
+pureIO = pure -- probably cheating?
+
+apIO :: IO (a -> b) -> IO a -> IO b
+apIO = (<*>)
+
+pureIO (+) `apIO` ((readIO "1") :: IO Int) `apIO` ((readIO "2") :: IO Int)
+3
+----
+
+.3.
+[source, haskell]
+----
+-- (,)
+-- Interesting. pure (++) <*> ("1", "2") can't work
+-- without Applicative implementation of ((->) r). Duh
+pureTuple :: Monoid a => a -> (a, a)
+pureTuple x = (mempty, x)
+
+apTuple :: Monoid a => (a, a -> b) -> (a, a) -> (a, b)
+apTuple (z, f) (y, x) = (z <> y, f x)
+
+("", (++)) `apTuple`("hi", "brown") `apTuple` ("there", "cow")
+("hithere","browncow")
+----
+
+.4.
+[source, haskell]
+----
+-- (->) e
+pureFunc :: a -> (e -> a)
+pureFunc = const -- mind blown (peeked on CHC.Base)
+
+apFunc :: (e -> (a -> b)) -> (e -> a) -> (e -> b)
+apFunc f g x = f x (g x) -- mind doubly blown
+-- I guess the x is the e in (e -> b)??
+-- going to leave a test for later :-)
+----
+
+=== Instances
+
+.1.
+[source, haskell]
+----
+data Pair a = Pair a a deriving (Eq, Show)
+
+instance Functor Pair where
+  fmap f (Pair x y) = Pair (f x) (f y)
+
+instance Applicative Pair where
+  pure x = Pair x x
+  (<*>) (Pair f g) (Pair x y) = Pair (f x) (g y)
+
+quickBatch $ applicative (undefined :: Pair (Bool, Int, String))
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+.2.
+[source, haskell]
+----
+data Two a b = Two a b deriving (Eq, Show)
+
+instance (Monoid a, Monoid b) => Monoid (Two a b) where
+  mempty = Two mempty mempty
+  mappend (Two x y) (Two x' y') = Two (x <> x') (y <> y')
+
+instance Functor (Two a) where
+  fmap f (Two x y) = Two x (f y)
+
+instance Monoid a => Applicative (Two a) where
+  pure = Two mempty
+  (<*>) (Two u f) (Two v x) = Two (u <> v) (f x)
+
+quickBatch $ applicative (undefined :: Two String (Int, String, Bool))
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+.3.
+[source, haskell]
+----
+data Three a b c
+  = Three a b c
+  deriving (Eq, Show)
+
+instance (Monoid a, Monoid b, Monoid c) => Monoid (Three a b c) where
+  mempty = Three mempty mempty mempty
+  mappend (Three x y z) (Three x' y' z') =
+    Three (x <> x') (y <> y') (z <> z')
+
+instance Functor (Three a b) where
+  fmap f (Three a b x) = Three a b (f x)
+
+instance (Monoid a, Monoid b) => Applicative (Three a b) where
+  pure = Three mempty mempty
+  (<*>) (Three u v f) (Three u' v' x) =
+    Three (u <> u') (v <> v') (f x)
+
+import Data.Monoid
+quickBatch $ applicative (undefined :: Three (Sum Int, [Int], String) (Sum Int, [Int], String) (Sum Int, [Int], String))
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+.4.
+[source, haskell]
+----
+data Three' a b
+  = Three' a b b
+  deriving (Eq, Show)
+
+instance (Monoid a, Monoid b) => Monoid (Three' a b) where
+  mempty = Three' mempty mempty mempty
+  mappend (Three' x y z) (Three' x' y' z') =
+    Three' (x <> x') (y <> y') (z <> z')
+
+instance Functor (Three' a) where
+  fmap f (Three' x y z) = Three' x (f y) (f z)
+
+instance Monoid a => Applicative (Three' a) where
+  pure x = Three' mempty x x
+  (<*>) (Three' x f g) (Three' y u v) =
+    Three' (x <> y) (f u) (g v)
+
+quickBatch $ applicative (undefined :: Three' String (Sum Int, String, Maybe Bool))
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+.5.
+[source, haskell]
+----
+data Four a b c d
+  = Four a b c d
+  deriving (Eq, Show)
+
+instance (Monoid a, Monoid b, Monoid c, Monoid d) => Monoid (Four a b c d) where
+  mempty = Four mempty mempty mempty mempty
+  mappend (Four w x y z) (Four w' x' y' z') =
+    Four (w <> w') (x <> x') (y <> y') (z <> z')
+
+instance Functor (Four a b c) where
+  fmap f (Four w x y z) = Four w x y (f z)
+
+instance (Monoid a, Monoid b, Monoid c) => Applicative (Four a b c) where
+  pure = Four mempty mempty mempty
+  (<*>) (Four w x y f) (Four w' x' y' z) =
+    Four (w <> w') (x <> x') (y <> y') (f z)
+
+quickBatch $ applicative (undefined :: Four () () () ((Sum Int), String, (Maybe Bool)))
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+.6.
+[source, haskell]
+----
+data Four' a b
+  = Four' a b b b
+  deriving (Eq, Show)
+
+instance (Monoid a, Monoid b) => Monoid (Four' a b) where
+  mempty = Four' mempty mempty mempty mempty
+  mappend (Four' w x y z) (Four' w' x' y' z') =
+    Four' (w <> w') (x <> x') (y <> y') (z <> z')
+
+instance Functor (Four' a) where
+  fmap f (Four' w x y z) = Four' w (f x) (f y) (f z)
+
+instance Monoid a => Applicative (Four' a) where
+  pure x = Four' mempty x x x
+  (<*>) (Four' a f g h) (Four' a' x y z) =
+    Four' (a <> a') (f x) (g y) (h z)
+    
+quickBatch $ applicative (undefined :: Four' (Sum Int) (Product Int, String, [Bool]))
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+----
+
+=== Combinations
+
+[haskell, source]
+combos :: [a] -> [b] -> [c] -> [(a, b, c)]
+combos = liftA3 (,,)
