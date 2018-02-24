@@ -1,0 +1,211 @@
+= 20. Foldable
+
+== 20.5 Some basic derived operations
+
+=== Exercises: Library Functions
+
+.1.
+[source, haskell]
+----
+sum :: (Foldable t, Num a) => t a -> a
+sum = getSum . foldMap Sum
+
+Main.sum [1..5]
+15
+----
+
+.2.
+[source, haskell]
+----
+product :: (Foldable t, Num a) => t a -> a
+product = getProduct . foldMap Product
+
+Main.product [1..5]
+120
+----
+
+.3.
+[source, haskell]
+----
+elem :: (Foldable t, Eq a) => a -> t a -> Bool
+elem x = getAny . foldMap (Any . (x ==))
+
+Main.elem 2 [1..3]
+True
+Main.elem 100 [1..3]
+False
+----
+
+.4.
+[source, haskell]
+----
+minimum :: (Foldable t, Ord a) => t a -> Maybe a
+minimum = foldr f Nothing
+  where
+    f x Nothing = Just x
+    f x (Just y) = Just (min x y)
+
+Main.minimum [1..6]
+Just 1
+Main.minimum []
+Nothing
+----
+
+.5.
+[source, haskell]
+----
+maximum :: (Foldable t, Ord a) => t a -> Maybe a
+maximum = foldr f Nothing
+  where
+    f x Nothing = Just x
+    f x (Just y) = Just (max x y)
+
+Main.maximum []
+Nothing
+Main.maximum [4, 2, 9, 4]
+Just 9
+----
+
+.6.
+[source, haskell]
+----
+null :: (Foldable t) => t a -> Bool
+null = foldr (\x _ -> False) True
+
+Main.null Nothing
+True
+Main.null (Left 0)
+True
+Main.null [1]
+False
+Main.null (Just 2)
+False
+----
+
+.7.
+[source, haskell]
+----
+length :: (Foldable t) => t a -> Int
+length = foldr (\_ xs -> xs + 1) 0
+
+Main.length [1..5]
+5
+Main.length []
+0
+Main.length (Just 2)
+1
+Main.length Nothing
+0
+----
+
+.8.
+[source, haskell]
+----
+toList :: (Foldable t) => t a -> [a]
+toList = foldr (:) []
+
+Main.toList [1..5]
+[1,2,3,4,5]
+Main.toList (Just 2)
+[2]
+Main.toList Nothing
+[]
+----
+
+.9.
+[source, haskell]
+----
+fold :: (Foldable t, Monoid m) => t m -> m
+fold = foldMap id
+
+
+Main.fold $ fmap Sum [1..5]
+Sum {getSum = 15}
+Main.fold Nothing
+()
+Main.fold (Just [1..5])
+[1,2,3,4,5]
+----
+
+.10.
+[source, haskell]
+----
+foldMap' :: (Foldable t, Monoid m) => (a -> m) -> t a -> m
+foldMap' f = foldr (mappend . f) mempty
+
+
+foldMap' Sum [1..5]
+Sum {getSum = 15}
+foldMap' Product [1..5]
+Product {getProduct = 120}
+foldMap' All [True, False, True]
+All {getAll = False}
+----
+
+== 20.6 Chapter Exercises
+
+=== Foldable Instances
+
+.1.
+[source, haskell]
+instance Foldable (Constant a) where
+  foldMap f (Constant x) = f x
+
+.2.
+[source, haskell]
+----
+instance Foldable (Two a) where
+  foldMap f (Two _ x) = f x
+
+foldMap (++"hi") (Right "there")
+"therehi"
+foldMap ("hi"++) (Two 1 " there")
+"hi there"
+----
+
+.3.
+[source, haskell]
+----
+instance Foldable (Three a b) where
+  foldMap f (Three _ _ x) = f x
+
+foldMap ("hi"++) (Three 1 2 " there")
+"hi there"
+----
+
+.4.
+[source, haskell]
+----
+instance Foldable (Three' a) where
+  foldMap f (Three _ x y) = f x <> f y
+
+foldMap Sum (Three' 'a' 2 3)
+Sum {getSum = 5}
+----
+
+.5.
+[source, haskell]
+----
+instance Foldable (Four' a) where
+  foldMap f (Four' _ x y z) = f x <> f y <> f z
+
+foldMap Product (Four' 'a' 2 3 4)
+Product {getProduct = 24}
+----
+
+=== Thinking Cap
+
+[source, haskell]
+----
+filterF :: ( Applicative f
+           , Foldable t
+           , Monoid (f a))
+        => (a -> Bool) -> t a -> f a
+filterF f =
+  foldMap (\x -> if f x then pure x else mempty)
+
+traverse print $ filterF even [1..5]
+2
+4
+[(),()]
+----

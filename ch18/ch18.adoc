@@ -261,3 +261,4 @@ flipType = turnInsideOut
 
 flipType $ fmap Just [1..3]
 Just [1,2,3]
+----
