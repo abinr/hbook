@@ -1,0 +1,140 @@
+= 21. Traversable
+
+== 21.12 Chapter Exercises
+
+=== Instances
+
+.1.
+[source, haskell]
+----
+instance Traversable Identity where
+  traverse f (Identity x) = fmap Identity (f x)
+
+quickBatch $ traversable (undefined :: Identity (Int, Maybe Bool, [Int]))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.2.
+[source, haskell]
+----
+instance Traversable (Constant a) where
+  traverse f (Constant x) = pure $ Constant x
+
+
+quickBatch $ traversable (undefined :: Constant Int (Int, Maybe Int, [Int]))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.3.
+[source, haskell]
+----
+instance Traversable Optional where
+  traverse _ Nada = pure Nada
+  traverse f (Yep x) = fmap Yep (f x)
+
+quickBatch $ traversable (undefined :: Optional (Int, String, [Int]))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.4.
+[source, haskell]
+----
+instance Traversable List where
+  traverse _ Nil = pure Nil
+  traverse f (Cons x xs) = pure Cons <*> f x <*> traverse f xs
+
+quickBatch $ traversable (undefined :: List (Int, Maybe Int, [Int]))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.5.
+[source, haskell]
+----
+instance Traversable (Three a b) where
+  traverse f (Three x y z) = fmap (Three x y) (f z)
+
+quickBatch $ traversable (undefined :: Three Int Int (String, Maybe Int, [Int]))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.6.
+[source, haskell]
+----
+instance Traversable (Pair a) where
+  traverse f (Pair x y) = fmap (Pair x) (f y)
+
+quickBatch $ traversable (undefined :: Pair Int (String, Maybe Int, [Int]))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.7.
+[source, haskell]
+----
+instance Traversable (Big a) where
+  traverse f (Big x y z) = pure (Big x) <*> f y <*> f z
+
+quickBatch $ traversable (undefined :: Big String (Int, Maybe Bool, [Int]))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.8.
+[source, haskell]
+----
+instance Traversable (Bigger a) where
+  traverse f (Bigger a b c d) = pure (Bigger a) <*> f b <*> f c <*> f d
+
+quickBatch $ traversable (undefined :: Bigger () (Int, Maybe Bool, [Int]))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.9.
+[source, haskell]
+----
+instance Traversable n => Traversable (S n) where
+  traverse f (S s x) = pure S <*> traverse f s <*> f x
+
+quickBatch $ traversable (undefined :: S ([]) (Int, [Bool], String))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
+
+.10.
+[source, haskell]
+----
+instance Traversable Tree where
+  traverse _ Empty = pure Empty
+  traverse f (Leaf x) = pure Leaf <*> f x
+  traverse f (Node l x r) = pure Node <*> traverse f l <*> f x <*> traverse f r
+
+quickBatch $ traversable (undefined :: Tree (Int, Maybe Bool, String))
+
+traversable:
+  fmap:    +++ OK, passed 500 tests.
+  foldMap: +++ OK, passed 500 tests.
+----
