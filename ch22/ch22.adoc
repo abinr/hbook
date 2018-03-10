@@ -1,0 +1,155 @@
+= 22. Reader
+
+== 22.2 A new beggining
+
+=== Short Exercise: Warming Up
+
+.1.
+[source, haskell]
+----
+composed :: [Char] -> [Char]
+composed = rev . cap
+
+fmapped :: [Char] -> [Char]
+fmapped = fmap rev cap
+
+composed "Brian"
+"NAIRB"
+fmapped "Brian"
+"NAIRB"
+----
+
+.2.
+[source, haskell]
+----
+tupled :: [Char] -> ([Char], [Char])
+tupled = pure (,) <*> rev <*> cap
+
+tupled' :: [Char] -> ([Char], [Char])
+tupled' = do
+  c <- cap
+  r <- rev
+  return (r, c)
+
+-- tupled'' :: [Char] -> ([Char], [Char])
+tupled'' =
+  cap >>= \c -> rev >>= \r -> return (r, c)
+
+tupled "Brian"
+("nairB","BRIAN")
+tupled' "Brian"
+("nairB","BRIAN")
+tupled'' "Brian"
+("nairB","BRIAN")
+----
+
+== 22.5 But uh, Reader
+
+=== Exercise: Ask
+
+[source, haskell]
+----
+newtype Reader r a
+  = Reader { runReader :: r -> a }
+
+ask :: Reader a a
+ask = Reader id
+----
+
+== 22.6 Functions have an Applicative too
+
+=== Exercise: Reading Comprehension
+
+.1.
+[source, haskell]
+----
+myLiftA2 :: Applicative f => (a -> b -> c) -> f a -> f b -> f c
+myLiftA2 f x y = pure f <*> x <*> y
+
+myLiftA2 (+) (+3) (*4) 2
+13
+----
+
+.2.
+[source, haskell]
+asks :: (r -> a) -> Reader r a
+asks f = Reader f
+
+.3.
+[source, haskell]
+----
+instance Functor (Reader r) where
+  fmap f (Reader g) = Reader $ f . g
+
+instance Applicative (Reader r) where
+  pure :: a -> Reader r a
+  pure x = Reader (\r -> x)
+
+  (<*>) :: Reader r (a -> b)
+        -> Reader r a
+        -> Reader r b
+  (<*>) (Reader f) (Reader g) =
+    Reader $ \r -> f r (g r)
+
+pure (+) <*> (+1) <*> (*2) $ 4
+13
+----
+
+== 22.7 The Monad of functions
+
+=== Exercise: Reader Monad
+
+.1.
+[source, haskell]
+----
+instance Monad (Reader r) where
+  return = pure
+
+  (>>=) :: Reader r a
+        -> (a -> Reader r b)
+        -> Reader r b
+  (>>=) (Reader g) f = Reader $ \r -> (runReader. f) (g r) r
+----
+
+.2.
+[source, haskell]
+-- I have no idea what this exercise wants me to do.
+-- I guess  pure Dog <*> dogName <*> address but that wouldn't use the Reader
+getDogRM' :: Person -> Dog
+getDogRM' p =
+  let
+    r = Reader Dog
+  in
+    (runReader r) (dogName p) (address p)
+
+
+== 22.11 Chapter Exercises
+
+=== Reader Practice
+
+[source, haskell]
+----
+summed :: Num c => (c, c) -> c
+summed = uncurry (+)
+
+bolt :: Integer -> Bool
+bolt = pure (&&) <*> (>3) <*> (<8)
+
+sequA :: Integral a => a -> [Bool]
+sequA m = sequenceA [(>3), (<8), even] m
+
+s' :: Maybe Integer
+s' = fmap summed $ pure (,) <*> xs <*> ys
+
+main :: IO ()
+main = do
+  print . getAll . foldMap All . sequA $ 7
+  print . sequA . fromMaybe 0 $ s'
+  print . bolt . fromMaybe 0 $ ys
+----
+
+=== Shawty
+
+----
+TO DO: Save for another day
+----

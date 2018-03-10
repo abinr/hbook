@@ -1,0 +1,182 @@
+= 23. State
+
+== 23.5 Throw Down
+
+=== Exercises: Roll Your Own
+
+.1.
+[source, haskell]
+----
+rollsToGetN :: Int -> StdGen -> Int
+rollsToGetN n g = go 0 0 g
+  where
+    go :: Int -> Int -> StdGen -> Int
+    go sum count gen
+      | sum >= n = count
+      | otherwise =
+        let
+          (die, nextGen) =
+            randomR (1, 6) gen
+        in
+          go (sum + die) (count + 1) nextGen
+
+fmap (rollsToGetN 20 . mkStdGen) randomIO
+7
+fmap (rollsToGetN 30 . mkStdGen) randomIO
+11
+----
+
+.2.
+[source, haskell]
+----
+rollsCountLogged :: Int -> StdGen -> (Int, [Die])
+rollsCountLogged n g = go 0 (0, []) g
+  where
+    go :: Int -> (Int, [Die]) -> StdGen -> (Int, [Die])
+    go sum (count, ds) gen
+      | sum >= n = (count, ds)
+      | otherwise =
+        let
+          (die, nextGen) =
+            randomR (1, 6) gen
+        in
+          go (sum + die) (count + 1, (intToDie die) : ds) nextGen
+
+fmap (rollsCountLogged 20 . mkStdGen) randomIO
+(7,[DieOne,DieOne,DieTwo,DieOne,DieFour,DieSix,DieFive])
+fmap (rollsCountLogged 30 . mkStdGen) randomIO
+(8,[DieSix,DieFive,DieThree,DieFour,DieFive,DieThree,DieThree,DieOne])
+----
+
+== 23.6 Write State for yourself
+
+.State Functor
+[source, haskell]
+instance Functor (Moi s) where
+  fmap f (Moi g) = Moi $ \s ->  let (x, y) = g s in (f x, y)
+
+.State Applicative
+[source, haskell]
+instance Applicative (Moi s) where
+  pure a = Moi $ \s -> (a, s)
+  (Moi f) <*> (Moi g) =
+    Moi $ \s ->
+            let
+              (h, s') = f s
+              (a, s'') = g s'
+            in
+              (h a, s'')
+
+.State Monad
+[source, haskell]
+instance Monoid s => Monad (Moi s) where
+  (Moi f) >>= g =
+    Moi $ \s ->
+            let
+              (a, s') = f s
+              (Moi h) = g a
+            in
+              h s'
+
+.Tests.
+[source, haskell]
+----
+instance ( Arbitrary s
+         , CoArbitrary s
+         , Arbitrary a)
+         => Arbitrary (Moi s a) where
+  arbitrary = pure Moi <*> arbitrary
+
+instance (Show s, Arbitrary s, EqProp s, EqProp a) => EqProp (Moi s a) where
+  (Moi f) =-= (Moi g) = f =-= g
+
+quickBatch $ applicative (undefined :: Moi String (Int, String, Maybe Int))
+
+applicative:
+  identity:     +++ OK, passed 500 tests.
+  composition:  +++ OK, passed 500 tests.
+  homomorphism: +++ OK, passed 500 tests.
+  interchange:  +++ OK, passed 500 tests.
+  functor:      +++ OK, passed 500 tests.
+quickBatch $ monad (undefined :: Moi String (Int, String, Maybe Int))
+
+monad laws:
+  left  identity: +++ OK, passed 500 tests.
+  right identity: +++ OK, passed 500 tests.
+  associativity:  +++ OK, passed 500 tests.
+----
+
+== 23.7 Get a coding job with one weird trick
+
+=== Fizzbuzz Differently
+
+[source, haskell]
+fizzBuzzFromTo :: Integer -> Integer -> [String]
+fizzBuzzFromTo from to = fizzBuzzList $ enumFromThenTo to (to - 1) from
+
+== 23.8 Chapter Exercises
+
+.1.
+[source, haskell]
+----
+get :: Moi s s
+get =  Moi $ \s -> (s, s)
+
+runMoi get "curryIsAwesome"
+("curryIsAwesome","curryIsAwesome")
+----
+
+.2.
+[source, haskell]
+----
+put :: s -> Moi s ()
+put = \s -> Moi $ \_ -> ((), s)
+
+runMoi (put "blah") "woot"
+((),"blah")
+----
+
+.3.
+[source, haskell]
+----
+exec :: Moi s a -> s -> s
+exec (Moi sa) s = snd $ sa s
+
+exec (put "wilma") "daphne"
+"wilma"
+exec get "scooby papu"
+"scooby papu"
+----
+
+.4.
+[source, haskell]
+----
+eval :: Moi s a -> s -> a
+eval (Moi sa) s = fst $ sa s
+
+eval get "bunnicula"
+"bunnicula"
+eval get "aint got no beef with bunnicula"
+"aint got no beef with bunnicula"
+----
+
+.5.
+[source, haskell]
+----
+modify :: (s -> s) -> Moi s ()
+modify f = Moi $ \s -> ((), f s)
+
+runMoi (modify (+1) >> modify (+1))  0
+
+<interactive>:116:1: error:
+    • Ambiguous type variable ‘s0’ arising from a use of ‘print’
+
+runMoi (modify (+1) >> modify (+1)) 0 :: ((), Int)
+
+<interactive>:117:9: error:
+    • No instance for (Monoid Int) arising from a use of ‘>>’
+   
+import Data.Monoid
+runMoi (modify (+1) >> modify (+1)) (Sum 0)
+((),Sum {getSum = 2})
+----
