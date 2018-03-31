@@ -47,3 +47,5 @@ include::ch22/ch22.adoc[leveloffset=+1]
 
 include::ch23/ch23.adoc[leveloffset=+1]
 
+include::ch24/ch24.adoc[leveloffset=+1]
+
