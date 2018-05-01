@@ -32,16 +32,13 @@ parseSemVer = do
   releases <- parseNumberOrString `sepEndBy` (symbol ".")
   optional (char '+')
   metadata <- (some $ alphaNum <|> char '-') `sepEndBy` (symbol ".")
-  pure $ SemVer
-    (major) (minor) (patch) releases metadata
+  pure $ SemVer major minor patch releases metadata
 
 parseNumberOrString :: Parser NumberOrString
 parseNumberOrString =
   NOSI . fromInteger <$> natural <|> NOSS <$> some (alphaNum <|> char '-')
 
-
 -- matches any natural number, leading zeros not allowed
--- .. but I need a Natural not a String
 strictNatural :: Parser Natural
 strictNatural =
   loneZero <|> fmap (fromInteger . listToInteger) ints
