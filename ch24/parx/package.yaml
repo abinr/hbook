@@ -33,6 +33,7 @@ library:
     - attoparsec
     - aeson
     - scientific
+    - time
 
 executables:
   parx-exe:
