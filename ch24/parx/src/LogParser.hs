@@ -13,43 +13,62 @@ main = do
   case parseString parseFile mempty file of
     Failure err -> print err
     Success xs -> do
-      putStrLn "Total Time Spent per Day"
-      putStrLn $ unlines $ fmap show $ fmap sumTimeSpent $ tagEntriesWithDay xs
+     let ds = tagEntriesWithDay xs
+     putStr "Total Time Spent: "
+     let perDay = (fmap . fmap) sumTimeSpent ds
+     putStrLn $ secsToLabel . ceiling $ foldr ((+) . snd) 0 perDay
+     putStr "Average Time Per Activity Per Day: "
+     putStrLn $ show $ (fmap . fmap) (secsToLabel . avgTimeSpent) ds
 
-sumTimeSpent :: DayLog -> (Day, NominalDiffTime)
-sumTimeSpent (DayLog d es) =
-  zip es (drop 1 es)
+sumTimeSpent :: [Entry] -> NominalDiffTime
+sumTimeSpent es =
+  insertEntryEnd es
   |> fmap timeSpent
   |> sum
-  |> (,) d
+
+avgTimeSpent :: [Entry] -> Integer
+avgTimeSpent es =
+  (ceiling . sumTimeSpent $ es) `div` (toInteger . length $ es)
+
+insertEntryEnd :: [Entry] -> [(Entry, Entry)]
+insertEntryEnd es =
+  zip es (drop 1 es)
+
+timeSpent :: (Entry, Entry) -> NominalDiffTime
+timeSpent ((Entry t1 _),(Entry t2 _)) =
+  diffUTCTime t2 t1
+
+secsToLabel :: Integer -> String
+secsToLabel n =
+  let
+    (h, h') = n `quotRem` 3600
+    (m, s) = h' `quotRem` 60
+  in
+    show h <> "h " <> show m <> "m " <> show s <> "s"
 
 data Entry =
   Entry UTCTime String
   deriving (Eq, Show)
 
-data DayLog =
-  DayLog Day [Entry]
-  deriving (Eq, Show)
-
 (|>) :: a -> (a -> b) -> b
 (|>) x f = f x
 
-tagEntriesWithDay :: [Entry] -> [DayLog]
+tagEntriesWithDay :: [Entry] -> [(Day, [Entry])]
 tagEntriesWithDay entries =
   entries
   |> groupBy sameDay
-  |> fmap (DayLog =<< entryDay . head) --too glyphic?
+  |> fmap ((,) =<< entryDay . head)
 
+entryDay :: Entry -> Day
 entryDay (Entry t _ ) =
   utctDay t
+
+entryTask :: Entry -> String
+entryTask (Entry _ a) = a
 
 sameDay :: Entry -> Entry -> Bool
 sameDay a b =
   entryDay a == entryDay b
-
-timeSpent :: (Entry, Entry) -> NominalDiffTime
-timeSpent ((Entry t1 _),(Entry t2 _)) =
-  diffUTCTime t2 t1
 
 parseFile :: Parser [Entry]
 parseFile = do
@@ -66,7 +85,7 @@ parseDay = do
 
 parseEntry :: String -> Parser Entry
 parseEntry day = do
-  time <- count 5 (digit <|> char ':')
+  time <- count 5 (digit <|>      char ':')
   space
   a <- manyTill anyChar (some newline <|> comment)
   utc <- parseTime' (day <> time)
