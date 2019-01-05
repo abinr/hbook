@@ -19,6 +19,7 @@ main = do
      putStrLn $ secsToLabel . ceiling $ foldr ((+) . snd) 0 perDay
      putStr "Average Time Per Activity Per Day: "
      putStrLn $ show $ (fmap . fmap) (secsToLabel . avgTimeSpent) ds
+     putStrLn $ show (DayLog ds)
 
 sumTimeSpent :: [Entry] -> NominalDiffTime
 sumTimeSpent es =
@@ -46,9 +47,34 @@ secsToLabel n =
   in
     show h <> "h " <> show m <> "m " <> show s <> "s"
 
+newtype DayLog =
+  DayLog [(Day, [Entry])]
+
+instance Show DayLog where
+  show (DayLog []) = []
+  show (DayLog (x:xs)) =
+    "\n# " <> show (fst x) <> "\n"
+    <> unlines (fmap show $ snd x)
+    <> show (DayLog xs)
+
 data Entry =
   Entry UTCTime String
-  deriving (Eq, Show)
+  deriving (Eq)
+
+entryTime :: Entry -> UTCTime
+entryTime (Entry t _) = t
+
+entryDay :: Entry -> Day
+entryDay (Entry t _ ) =
+  utctDay t
+
+entryTask :: Entry -> String
+entryTask (Entry _ a) = a
+
+instance Show Entry where
+  show x =
+    (formatTime defaultTimeLocale "%R" $ entryTime x) <> " " <> entryTask x
+
 
 (|>) :: a -> (a -> b) -> b
 (|>) x f = f x
@@ -58,13 +84,6 @@ tagEntriesWithDay entries =
   entries
   |> groupBy sameDay
   |> fmap ((,) =<< entryDay . head)
-
-entryDay :: Entry -> Day
-entryDay (Entry t _ ) =
-  utctDay t
-
-entryTask :: Entry -> String
-entryTask (Entry _ a) = a
 
 sameDay :: Entry -> Entry -> Bool
 sameDay a b =
