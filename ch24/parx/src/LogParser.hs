@@ -22,10 +22,8 @@ main = do
      putStrLn $ show (DayLog ds)
 
 sumTimeSpent :: [Entry] -> NominalDiffTime
-sumTimeSpent es =
-  insertEntryEnd es
-  |> fmap timeSpent
-  |> sum
+sumTimeSpent =
+  sum . fmap timeSpent . insertEntryEnd
 
 avgTimeSpent :: [Entry] -> Integer
 avgTimeSpent es =
@@ -75,15 +73,9 @@ instance Show Entry where
   show x =
     (formatTime defaultTimeLocale "%R" $ entryTime x) <> " " <> entryTask x
 
-
-(|>) :: a -> (a -> b) -> b
-(|>) x f = f x
-
 tagEntriesWithDay :: [Entry] -> [(Day, [Entry])]
-tagEntriesWithDay entries =
-  entries
-  |> groupBy sameDay
-  |> fmap ((,) =<< entryDay . head)
+tagEntriesWithDay =
+  fmap ((,) =<< entryDay . head) . groupBy sameDay
 
 sameDay :: Entry -> Entry -> Bool
 sameDay a b =

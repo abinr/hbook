@@ -46,6 +46,7 @@ executables:
     dependencies:
     - parx
     - hspec
+    - QuickCheck
 
 tests:
   parx-test:
@@ -58,6 +59,7 @@ tests:
     dependencies:
     - parx
     - hspec
+    - QuickCheck
     - trifecta
     - bytestring
     - raw-strings-qq
