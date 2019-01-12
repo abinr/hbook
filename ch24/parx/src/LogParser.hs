@@ -10,7 +10,7 @@ import Data.List (groupBy)
 main :: IO ()
 main = do
   file <- readFile "./src/log.txt"
-  case parseString parseFile mempty file of
+  case parseString parseLogFile mempty file of
     Failure err -> print err
     Success xs -> do
      let ds = tagEntriesWithDay xs
@@ -47,17 +47,18 @@ secsToLabel n =
 
 newtype DayLog =
   DayLog [(Day, [Entry])]
+  deriving (Show, Eq)
 
-instance Show DayLog where
-  show (DayLog []) = []
-  show (DayLog (x:xs)) =
+showDayLog :: DayLog -> String
+showDayLog (DayLog []) = []
+showDayLog (DayLog (x:xs)) =
     "\n# " <> show (fst x) <> "\n"
-    <> unlines (fmap show $ snd x)
-    <> show (DayLog xs)
+    <> unlines (fmap showEntry $ snd x)
+    <> showDayLog (DayLog xs)
 
 data Entry =
   Entry UTCTime String
-  deriving (Eq)
+  deriving (Show, Eq)
 
 entryTime :: Entry -> UTCTime
 entryTime (Entry t _) = t
@@ -69,8 +70,8 @@ entryDay (Entry t _ ) =
 entryTask :: Entry -> String
 entryTask (Entry _ a) = a
 
-instance Show Entry where
-  show x =
+showEntry :: Entry -> String
+showEntry x =
     (formatTime defaultTimeLocale "%R" $ entryTime x) <> " " <> entryTask x
 
 tagEntriesWithDay :: [Entry] -> [(Day, [Entry])]
@@ -81,8 +82,8 @@ sameDay :: Entry -> Entry -> Bool
 sameDay a b =
   entryDay a == entryDay b
 
-parseFile :: Parser [Entry]
-parseFile = do
+parseLogFile :: Parser [Entry]
+parseLogFile = do
   whiteSpace
   skipMany comment
   fmap concat $ some parseDay
