@@ -13,16 +13,18 @@ main = hspec spec
 spec :: Spec
 spec = do
   describe "LogParser Test" $ do
-    it "should parse a Diary (DayLog) equal to itself" $ property $
-      \x -> x == (parseDayLog $ showDayLog (x :: DayLog))
+    it "should parse a Diary (DayLog) equal to itself" $
+      property propInverse
+
+propInverse :: DayLog -> Bool
+propInverse log =
+  log == (parseDayLog $ showDayLog log)
 
 f = do
-  v <- generate $ resize 4 (arbitrary :: Gen DayLog)
-  print v
-  putStrLn $ showDayLog v
-  let t = parseDayLog $ showDayLog v
-  print t
-  print $ v == t
+  v <- sample' $ resize 50 (arbitrary :: Gen DayLog)
+  let xs = filter (\x -> x /= (parseDayLog $ show x)) v
+  traverse (appendFile "fail.txt" . show) xs
+
 
 parseDayLog :: String -> DayLog
 parseDayLog x =

@@ -9,7 +9,7 @@ import Data.List (groupBy)
 
 main :: IO ()
 main = do
-  file <- readFile "./src/log.txt"
+  file <- readFile "./fail.txt"
   case parseString parseLogFile mempty file of
     Failure err -> print err
     Success xs -> do
@@ -47,7 +47,10 @@ secsToLabel n =
 
 newtype DayLog =
   DayLog [(Day, [Entry])]
-  deriving (Show, Eq)
+  deriving (Eq)
+
+instance Show DayLog where
+  show = showDayLog
 
 showDayLog :: DayLog -> String
 showDayLog (DayLog []) = []
@@ -58,7 +61,10 @@ showDayLog (DayLog (x:xs)) =
 
 data Entry =
   Entry UTCTime String
-  deriving (Show, Eq)
+  deriving (Eq)
+
+instance Show Entry where
+  show = showEntry
 
 entryTime :: Entry -> UTCTime
 entryTime (Entry t _) = t
