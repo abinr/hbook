@@ -103,7 +103,7 @@ parseDay = do
 
 parseEntry :: String -> Parser Entry
 parseEntry day = do
-  time <- count 5 (digit <|>      char ':')
+  time <- count 5 (digit <|> char ':')
   space
   a <- manyTill anyChar (some newline <|> comment)
   utc <- parseTime' (day <> time)

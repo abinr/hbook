@@ -302,3 +302,47 @@ parsePhone = do
   return $ PhoneNumber area exchg line
 ----
 
+=== 5. Funky Diary
+
+See source code (ch24 parx src)
+
+=== 6. IPv4 Addresses
+
+[source, haskell]
+----
+module IPv4Parser where
+
+import Text.Trifecta
+import Data.Word
+import Data.Char
+import Control.Applicative
+
+data IPv4Address =
+  IPv4Address Word32
+  deriving (Eq, Ord, Show)
+
+parseIPv4Address :: Parser IPv4Address
+parseIPv4Address =
+  fmap (IPv4Address . octetListToInteger) $ some parseOctet
+
+parseOctet :: Parser Word8
+parseOctet = do
+  n <- natural <* optional (char '.')
+  case n <= 255 of
+    False -> unexpected $ "Octet cannot be > 255. You have " ++ show n
+    True -> return $ fromIntegral n
+
+octetListToInteger :: [Word8] -> Word32
+octetListToInteger =
+  foldl1 (\acc a -> acc * 256 + a) . fmap fromIntegral
+
+parseString parseIPv4Address mempty "256.255.255.0"
+Failure (ErrInfo {_errDoc = (interactive):1:5: error: unexpected
+    Octet cannot be > 255. You have
+    256
+256.255.255.0<EOF> 
+    ^              , _errDeltas = [Columns 4 4]})
+
+parseString parseIPv4Address mempty "255.255.255.0"
+Success (IPv4Address 4294967040)
+----
